@@ -1,12 +1,11 @@
 # Scientific and operational limitations
 
-No practical quantum speedup, trading edge, hardware execution or production
-authorization is established by this release. The finite simulator experiments
+The published experiments do not demonstrate a practical quantum speedup,
+trading edge or production authorization. Reported simulator experiments
 are classical computations of small quantum systems with classical competitors.
 
-Historical private intraday market snapshots, fitted strategies, private backend
-calibrations, QPU results, provider accounts and frozen evidence archives are not
-distributed. Public upstream SDK fake-backend calibration fixtures are retained
+Private intraday market snapshots, fitted strategies, internal provider
+calibrations, account records and frozen evidence archives are not distributed. Public upstream SDK fake-backend calibration fixtures are retained
 under their upstream licenses; these are not new private or live measurements.
 Source-era performance assertions in original module commentary are
 historical context, not independently reproduced release results. Researchers must
@@ -22,8 +21,8 @@ normalization must remain fold-local. QRC/ESN comparisons are task-dependent and
 cannot establish advantage by picking a favorable seed.
 
 Hardware credential gates, budget stores, lineage and signed/frozen controls are
-research infrastructure, not evidence of a real QPU run, provider acceptance,
-cryptographic key custody or production security certification. Source generations
+research infrastructure; their presence alone does not establish provider
+acceptance, cryptographic key custody or production security certification. Source generations
 and experimental skeleton packages are preserved as originally implemented; no
 new placeholder model is added to imply unimplemented capability.
 

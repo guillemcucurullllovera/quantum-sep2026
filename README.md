@@ -37,13 +37,15 @@ third-party implementations are **not first-party portfolio authorship**. Retain
 these permitted upstream dependencies avoids stripping first-party finance bridges
 and research integrations that use them. No restricted third-party material ships.
 
-## Boundaries
+## Public release and validation scope
 
-No credentials, private market observations, live QPU job records, production
-configuration or historical result archives are included. Real hardware execution
-requires your own credentials, budget and authorization. Offline tests use synthetic,
-ideal/noisy-simulator, fake-backend or mocked-service inputs; they do not establish
-historical financial performance or practical quantum advantage.
+Credentials, private market observations, production configuration and internal
+experiment archives are not included. Reproducible tests in this release use
+synthetic data, ideal/noisy simulators, fake backends and mocked services.
+Hardware integrations are documented as software interfaces; the published
+evidence is limited to the validation methods explicitly reported in
+TEST_RESULTS.md. No historical financial performance or practical quantum
+advantage is asserted.
 
 Original first-party source attribution: Asymmetrica Investments and Francisco.
 Authorized parent export: Guillem Cucurull Llovera. Root Apache-2.0 applies only to
