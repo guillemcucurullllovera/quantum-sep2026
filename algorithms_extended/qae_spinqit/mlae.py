@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -38,9 +39,27 @@ def _nll(a: float, ks: Sequence[int], m: Sequence[int], N: Sequence[int]) -> flo
     return val
 
 
+@lru_cache(maxsize=32)
+def _log_likelihood_grid(ks: tuple[int, ...], grid_size: int):
+    """Release modification, 2026-11-02: cache vectorized original grid terms.
+
+    Same grid, clipping, binomial likelihood and subsequent golden-section
+    refinement as the MIT-adapted scalar implementation; no sampling/trial
+    counts or estimator model are changed. See RELEASE_CHANGES.md.
+    """
+    grid = np.linspace(0.0, 1.0, grid_size)
+    powers = 2 * np.asarray(ks) + 1
+    probs = np.clip(np.sin(powers[:, None] * np.arcsin(np.sqrt(grid))) ** 2,
+                    _EPS, 1.0 - _EPS)
+    log_p, log_one_minus_p = np.log(probs), np.log1p(-probs)
+    for array in (grid, log_p, log_one_minus_p):
+        array.setflags(write=False)
+    return grid, log_p, log_one_minus_p
+
+
 def _mle_point(ks: Sequence[int], m: Sequence[int], N: Sequence[int], grid_size: int = 20001) -> float:
-    A = np.linspace(0.0, 1.0, grid_size)
-    nlls = np.array([_nll(float(a), ks, m, N) for a in A])
+    A, log_p, log_one_minus_p = _log_likelihood_grid(tuple(int(k) for k in ks), grid_size)
+    nlls = -(np.asarray(m) @ log_p + (np.asarray(N) - m) @ log_one_minus_p)
     a0 = float(A[int(np.argmin(nlls))])
     d = 5.0 / grid_size
     lo, hi = max(0.0, a0 - d), min(1.0, a0 + d)

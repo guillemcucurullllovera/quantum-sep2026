@@ -1,0 +1,57 @@
+name: Comprehensive platform checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  offline-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMBA_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked --extra dev --python 3.12
+      - run: uv run --no-sync python tools/verify_release.py
+      - run: uv run --no-sync python tools/synthetic_release_smoke.py
+      - run: uv run --no-sync pytest -q -m 'not slow' --junitxml=test-results.xml
+      - run: uv build --quiet
+      - name: Verify installed wheel, not editable source imports
+        run: |
+          uv venv wheel-env --python 3.12
+          uv pip install --python wheel-env/bin/python dist/*.whl 'pytest>=9.0.3,<10'
+          cd "$RUNNER_TEMP"
+          "$GITHUB_WORKSPACE/wheel-env/bin/python" -c "import core, algorithms, applications, hardware; assert all('site-packages' in p.__file__ for p in (core, algorithms, applications, hardware))"
+          ASSERT_INSTALLED_WHEEL=1 "$GITHUB_WORKSPACE/wheel-env/bin/python" -I "$GITHUB_WORKSPACE/tools/synthetic_release_smoke.py"
+          "$GITHUB_WORKSPACE/wheel-env/bin/python" -I -m pytest --import-mode=importlib -o pythonpath= -q "$GITHUB_WORKSPACE/tests/unit/test_release_likelihood_grid.py" "$GITHUB_WORKSPACE/tests/algorithms/test_noise_aware_qae.py" "$GITHUB_WORKSPACE/tests/quantum1b/test_classical_exact.py"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-release-evidence
+          path: |
+            test-results.xml
+            dist/*
+  history-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checksum-verified complete-history scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/gitleaks"
+          gh release download v8.24.3 --repo gitleaks/gitleaks --pattern 'gitleaks_8.24.3_linux_x64.tar.gz' --pattern 'gitleaks_8.24.3_checksums.txt' --dir "$RUNNER_TEMP/gitleaks"
+          cd "$RUNNER_TEMP/gitleaks"
+          sha256sum --check --ignore-missing gitleaks_8.24.3_checksums.txt
+          tar -xzf gitleaks_8.24.3_linux_x64.tar.gz
+          cd "$GITHUB_WORKSPACE"
+          "$RUNNER_TEMP/gitleaks/gitleaks" git --log-opts=--all --redact --no-banner

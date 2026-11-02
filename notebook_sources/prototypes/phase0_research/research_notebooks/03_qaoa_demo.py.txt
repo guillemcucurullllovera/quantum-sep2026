@@ -1,3 +1,4 @@
+# Archival notebook code only; not a validated standalone script.
 # Extracted first-party notebook code; execution outputs intentionally omitted.
 
 # Notebook cell
@@ -847,4 +848,3 @@ print("="*70)
 
 
 # Notebook cell
-

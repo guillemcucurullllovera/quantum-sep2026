@@ -1,7 +1,7 @@
 include *.md *.json *.cff LICENSE NOTICE uv.lock
 recursive-include LICENSES *
 recursive-include tests *.py *.lp *.tsp
-recursive-include notebook_sources *.py
+recursive-include notebook_sources *.txt
 recursive-include experiments *.json
 global-exclude *.sqlite3 *.db *.pyc
 prune .venv

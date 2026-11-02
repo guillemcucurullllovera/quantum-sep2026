@@ -4,9 +4,11 @@ No practical quantum speedup, trading edge, hardware execution or production
 authorization is established by this release. The finite simulator experiments
 are classical computations of small quantum systems with classical competitors.
 
-Historical private intraday market snapshots, fitted strategies, observed backend
+Historical private intraday market snapshots, fitted strategies, private backend
 calibrations, QPU results, provider accounts and frozen evidence archives are not
-distributed. Source-era performance assertions in original module commentary are
+distributed. Public upstream SDK fake-backend calibration fixtures are retained
+under their upstream licenses; these are not new private or live measurements.
+Source-era performance assertions in original module commentary are
 historical context, not independently reproduced release results. Researchers must
 re-run relevant drivers using lawfully obtained data and report uncertainty,
 classical erosion, simulability, data-loading/oracle costs and selection effects.

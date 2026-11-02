@@ -12,7 +12,7 @@
       "destination_path": "LICENSES/amazon_braket_APACHE-2.0.txt",
       "source_sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
       "destination_sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -22,7 +22,7 @@
       "destination_path": "LICENSES/amazon_braket_NOTICE.txt",
       "source_sha256": "c8fa8375aac336929966e2d75fe97492f7769c3312a53ab979799b4e03db3589",
       "destination_sha256": "c8fa8375aac336929966e2d75fe97492f7769c3312a53ab979799b4e03db3589",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -32,7 +32,7 @@
       "destination_path": "LICENSES/ibm_quantum_kernel_training_APACHE-2.0.txt",
       "source_sha256": "2abbf84ec81cc5331f23c655593de2c602ec981e7c28f34f75babc811e2856d4",
       "destination_sha256": "2abbf84ec81cc5331f23c655593de2c602ec981e7c28f34f75babc811e2856d4",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -42,7 +42,7 @@
       "destination_path": "LICENSES/pennylane_APACHE-2.0.txt",
       "source_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
       "destination_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -52,7 +52,7 @@
       "destination_path": "LICENSES/qaoa_training_pipeline_APACHE-2.0.txt",
       "source_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
       "destination_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -62,7 +62,7 @@
       "destination_path": "LICENSES/qiskit-finance-data-providers_reference.txt",
       "source_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
       "destination_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -72,7 +72,7 @@
       "destination_path": "LICENSES/qiskit-finance_Apache-2.0.txt",
       "source_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
       "destination_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -82,7 +82,7 @@
       "destination_path": "LICENSES/qiskit_experiments_APACHE-2.0.txt",
       "source_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
       "destination_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -92,7 +92,7 @@
       "destination_path": "LICENSES/qiskit_ibm_runtime_APACHE-2.0.txt",
       "source_sha256": "7b7de08c64b1824bdc2b9f4b530814a9d0b5905a38ad0e96a717f3dd46d2bbe7",
       "destination_sha256": "7b7de08c64b1824bdc2b9f4b530814a9d0b5905a38ad0e96a717f3dd46d2bbe7",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -102,7 +102,7 @@
       "destination_path": "LICENSES/qiskit_machine_learning_APACHE-2.0.txt",
       "source_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
       "destination_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -112,7 +112,7 @@
       "destination_path": "LICENSES/qiskit_optimization_APACHE-2.0.txt",
       "source_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
       "destination_sha256": "217ac15dbcda2782e004f5152886d847988c6367aaa0c4fc8c355363c21bd224",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -122,7 +122,7 @@
       "destination_path": "LICENSES/qokit_APACHE-2.0.txt",
       "source_sha256": "5511d531d831b3f912b0ff58ac1d2a4bc965d035f6ea578b1e612484667e8287",
       "destination_sha256": "5511d531d831b3f912b0ff58ac1d2a4bc965d035f6ea578b1e612484667e8287",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -132,7 +132,7 @@
       "destination_path": "LICENSES/spinqit_MIT.txt",
       "source_sha256": "510c7cb52b371ac51a69d8880f05b36efbfa0b85d3aa64ded5272f72ed33a768",
       "destination_sha256": "510c7cb52b371ac51a69d8880f05b36efbfa0b85d3aa64ded5272f72ed33a768",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -142,7 +142,7 @@
       "destination_path": "LICENSES/tket_APACHE-2.0.txt",
       "source_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
       "destination_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-      "provenance_class": "FIRST_PARTY",
+      "provenance_class": "THIRD_PARTY_LICENSE",
       "changes": []
     },
     {
@@ -4032,7 +4032,7 @@
       "destination_path": "algorithms_extended/error_mitigation/zne.py",
       "source_sha256": "df2f2309824e631bc9563bb5920bfcac6537ac7557269199d97da41561dfe36e",
       "destination_sha256": "df2f2309824e631bc9563bb5920bfcac6537ac7557269199d97da41561dfe36e",
-      "provenance_class": "THIRD_PARTY_OR_MIXED_PERMISSIVE",
+      "provenance_class": "FIRST_PARTY",
       "changes": []
     },
     {
@@ -4391,9 +4391,11 @@
       "source_path": "algorithms_extended/qae_spinqit/mlae.py",
       "destination_path": "algorithms_extended/qae_spinqit/mlae.py",
       "source_sha256": "4525e4ce432bb331671e1a96e1308ad2bf112c117e66d1c1401c011c21a7ac76",
-      "destination_sha256": "4525e4ce432bb331671e1a96e1308ad2bf112c117e66d1c1401c011c21a7ac76",
+      "destination_sha256": "5468620a7720d6e3374a81afd8f5a4b43f560509595cb790425b382a53d79057",
       "provenance_class": "THIRD_PARTY_OR_MIXED_PERMISSIVE",
-      "changes": []
+      "changes": [
+        "Cache/vectorize original clipped likelihood grid; original grid, golden refinement, estimator, bootstrap sample/trial counts unchanged; 12 independent scalar-grid oracle regressions added"
+      ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
@@ -13699,12 +13701,13 @@
       "source_branch": "main",
       "source_commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "source_path": "benchmarks/algorithms/qrc/qrc_investor_demo.ipynb",
-      "destination_path": "notebook_sources/benchmarks/algorithms/qrc/qrc_investor_demo.py",
+      "destination_path": "notebook_sources/benchmarks/algorithms/qrc/qrc_investor_demo.py.txt",
       "source_sha256": "3fce18b37df70882216257812c593b761cdcb2b0933bd1caf360bf6a8dd562fb",
-      "destination_sha256": "9f82f2ce51441256926363c36d4a627c7f344fe6203cb8482739696f65bb6054",
+      "destination_sha256": "812f7c832c3e50972184b9c1e7b376acd740406b2b0b2e777282c45f101417f6",
       "provenance_class": "FIRST_PARTY",
       "changes": [
-        "Code cells only; outputs and notebook metadata excluded"
+        "Code cells only; outputs and notebook metadata excluded",
+        "Archival code-cell text, not an executable/validated script; original notebook indentation defects are not reconstructed; retired investor code explicitly labeled"
       ]
     },
     {
@@ -14973,9 +14976,11 @@
       "source_path": "experiments/quantum1b/run_track_a.py",
       "destination_path": "experiments/quantum1b/run_track_a.py",
       "source_sha256": "a3fec8d91e63d6a5cdffa92b4bc135c0f86721f97828eb9a515fe7e1b16d0f0c",
-      "destination_sha256": "a3fec8d91e63d6a5cdffa92b4bc135c0f86721f97828eb9a515fe7e1b16d0f0c",
+      "destination_sha256": "f58083072766ced49483c3416a6e94d7bd2de681912dc5fc26dd24e2d8e8659c",
       "provenance_class": "FIRST_PARTY",
-      "changes": []
+      "changes": [
+        "Reviewed release integration/configuration edit; see RELEASE_CHANGES.md"
+      ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
@@ -14983,9 +14988,11 @@
       "source_path": "experiments/quantum1b/run_track_b_exp_b1.py",
       "destination_path": "experiments/quantum1b/run_track_b_exp_b1.py",
       "source_sha256": "ffc1a945b1f4abd566189d87dba8f4bc4da14a3c0252bd35f0218d59c2fc6aa5",
-      "destination_sha256": "ffc1a945b1f4abd566189d87dba8f4bc4da14a3c0252bd35f0218d59c2fc6aa5",
+      "destination_sha256": "de205fe926a447be96c430f12934231e5f28582fe5a4bf60e13395493d8303ed",
       "provenance_class": "FIRST_PARTY",
-      "changes": []
+      "changes": [
+        "Reviewed release integration/configuration edit; see RELEASE_CHANGES.md"
+      ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
@@ -16411,60 +16418,65 @@
       "source_branch": "quantum/quantum1b-research-20260930",
       "source_commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "source_path": "prototypes/phase0_research/notebooks/vqc_visual_demo.ipynb",
-      "destination_path": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py",
+      "destination_path": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py.txt",
       "source_sha256": "b8ddf267c4b9b0426b80e99f84ce3d2eb1a0cf2c39f8e75aa92ad4a9b6b8b41e",
-      "destination_sha256": "344b0c5e8e01fead99e0d849813a7063c863658a0945d745eb1298831a129f9a",
+      "destination_sha256": "15e0d6ef8eee961246b4b5a7d5c3a3da290662ab7c6601883a21b7c4934c87b1",
       "provenance_class": "FIRST_PARTY",
       "changes": [
-        "Code cells only; outputs and notebook metadata excluded"
+        "Code cells only; outputs and notebook metadata excluded",
+        "Archival code-cell text, not an executable/validated script; original notebook indentation defects are not reconstructed; retired investor code explicitly labeled"
       ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
       "source_commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "source_path": "prototypes/phase0_research/research_notebooks/01_data_preparation.ipynb",
-      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py",
+      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py.txt",
       "source_sha256": "7c3e8f76cdcca1766052bc26333684da970a936bbae74d752c9786bef8284eca",
-      "destination_sha256": "d01299eb4e804fd5ea78d858a1df00fa9caa6a23e71efac470e5951059821180",
+      "destination_sha256": "bebd47c457e07287eb83ddfc41ab1215a50ac7c62ecc78e24a0e5683e4e6dfda",
       "provenance_class": "FIRST_PARTY",
       "changes": [
-        "Code cells only; outputs and notebook metadata excluded"
+        "Code cells only; outputs and notebook metadata excluded",
+        "Archival code-cell text, not an executable/validated script; original notebook indentation defects are not reconstructed; retired investor code explicitly labeled"
       ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
       "source_commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "source_path": "prototypes/phase0_research/research_notebooks/02_qubo_formulation.ipynb",
-      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py",
+      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py.txt",
       "source_sha256": "6d314be08de03d56ce86c356f0c26e4263218754b263429d064f28c0f5a279c7",
-      "destination_sha256": "d3254e96b589495cb846a99635a7ef7db2a9fea0bda196a15cca9fe5a66f82da",
+      "destination_sha256": "5924bf3f017fe21090c9289d8c55ee18fc7f790665ab1b4f9686437aa761b184",
       "provenance_class": "FIRST_PARTY",
       "changes": [
-        "Code cells only; outputs and notebook metadata excluded"
+        "Code cells only; outputs and notebook metadata excluded",
+        "Archival code-cell text, not an executable/validated script; original notebook indentation defects are not reconstructed; retired investor code explicitly labeled"
       ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
       "source_commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "source_path": "prototypes/phase0_research/research_notebooks/03_qaoa_demo.ipynb",
-      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py",
+      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py.txt",
       "source_sha256": "f4e649a6ca70d21278790001d6bc289b03d4b577ba3be6522e47567fc1744dfc",
-      "destination_sha256": "0ecbbf0bde2fb56b52c411a8b0a97e2aa995d64f2fe846e992ac6e0c20f0d038",
+      "destination_sha256": "9da58a7d5b303d6a1b89fd2dea4d76a67705ef01faa451c93de0edaef05a1ad6",
       "provenance_class": "FIRST_PARTY",
       "changes": [
-        "Code cells only; outputs and notebook metadata excluded"
+        "Code cells only; outputs and notebook metadata excluded",
+        "Archival code-cell text, not an executable/validated script; original notebook indentation defects are not reconstructed; retired investor code explicitly labeled"
       ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
       "source_commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "source_path": "prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.ipynb",
-      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py",
+      "destination_path": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py.txt",
       "source_sha256": "c88e731369ff8a90ca0d3c71d65a81c2a3083bf933f9e94011486d06d2f8f7e3",
-      "destination_sha256": "145703b1f95a2591d7be764e0414128f7f72226f5c56746fc38fe6510b59a0f2",
+      "destination_sha256": "688a845d2a96f768d987754f421a80fbbffd9c6b537d44039cdcdcf3cb161440",
       "provenance_class": "FIRST_PARTY",
       "changes": [
-        "Code cells only; outputs and notebook metadata excluded"
+        "Code cells only; outputs and notebook metadata excluded",
+        "Archival code-cell text, not an executable/validated script; original notebook indentation defects are not reconstructed; retired investor code explicitly labeled"
       ]
     },
     {
@@ -30713,7 +30725,7 @@
       "branch": "main",
       "commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "path": "benchmarks/algorithms/qrc/qrc_investor_demo.ipynb",
-      "destination": "notebook_sources/benchmarks/algorithms/qrc/qrc_investor_demo.py",
+      "destination": "notebook_sources/benchmarks/algorithms/qrc/qrc_investor_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -33121,7 +33133,7 @@
       "branch": "main",
       "commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "path": "prototypes/phase0_research/notebooks/vqc_visual_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -33129,7 +33141,7 @@
       "branch": "main",
       "commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "path": "prototypes/phase0_research/research_notebooks/01_data_preparation.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -33137,7 +33149,7 @@
       "branch": "main",
       "commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "path": "prototypes/phase0_research/research_notebooks/02_qubo_formulation.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -33145,7 +33157,7 @@
       "branch": "main",
       "commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "path": "prototypes/phase0_research/research_notebooks/03_qaoa_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -33153,7 +33165,7 @@
       "branch": "main",
       "commit": "799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0",
       "path": "prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -49729,7 +49741,7 @@
       "branch": "quantum/quantum1b-research-20260930",
       "commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "path": "prototypes/phase0_research/notebooks/vqc_visual_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -49737,7 +49749,7 @@
       "branch": "quantum/quantum1b-research-20260930",
       "commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "path": "prototypes/phase0_research/research_notebooks/01_data_preparation.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -49745,7 +49757,7 @@
       "branch": "quantum/quantum1b-research-20260930",
       "commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "path": "prototypes/phase0_research/research_notebooks/02_qubo_formulation.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -49753,7 +49765,7 @@
       "branch": "quantum/quantum1b-research-20260930",
       "commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "path": "prototypes/phase0_research/research_notebooks/03_qaoa_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -49761,7 +49773,7 @@
       "branch": "quantum/quantum1b-research-20260930",
       "commit": "ab1881eaa082312bba73399fca4c8f8aca42b0a7",
       "path": "prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -65937,7 +65949,7 @@
       "branch": "checkpoint/quantum1a-accepted-20260930",
       "commit": "b7ff60c9725dc9b8e2689aec458dc64a79c667a7",
       "path": "prototypes/phase0_research/notebooks/vqc_visual_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/notebooks/vqc_visual_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -65945,7 +65957,7 @@
       "branch": "checkpoint/quantum1a-accepted-20260930",
       "commit": "b7ff60c9725dc9b8e2689aec458dc64a79c667a7",
       "path": "prototypes/phase0_research/research_notebooks/01_data_preparation.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/01_data_preparation.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -65953,7 +65965,7 @@
       "branch": "checkpoint/quantum1a-accepted-20260930",
       "commit": "b7ff60c9725dc9b8e2689aec458dc64a79c667a7",
       "path": "prototypes/phase0_research/research_notebooks/02_qubo_formulation.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/02_qubo_formulation.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -65961,7 +65973,7 @@
       "branch": "checkpoint/quantum1a-accepted-20260930",
       "commit": "b7ff60c9725dc9b8e2689aec458dc64a79c667a7",
       "path": "prototypes/phase0_research/research_notebooks/03_qaoa_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/03_qaoa_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -65969,7 +65981,7 @@
       "branch": "checkpoint/quantum1a-accepted-20260930",
       "commit": "b7ff60c9725dc9b8e2689aec458dc64a79c667a7",
       "path": "prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.ipynb",
-      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py",
+      "destination": "notebook_sources/prototypes/phase0_research/research_notebooks/04_vqc_pipeline_demo.py.txt",
       "disposition": "RETAINED",
       "reason": "Code cells only; outputs and notebook metadata excluded"
     },
@@ -68645,7 +68657,7 @@
     "benchmarks/algorithms/qrc/qrc_1h_v2.py",
     "benchmarks/algorithms/qrc/qrc_1h_v2_fast.py",
     "benchmarks/algorithms/qrc/qrc_1h_v3.py",
-    "notebook_sources/benchmarks/algorithms/qrc/qrc_investor_demo.py",
+    "notebook_sources/benchmarks/algorithms/qrc/qrc_investor_demo.py.txt",
     "benchmarks/algorithms/qrc/qrc_m15_5d_benchmark.py",
     "benchmarks/algorithms/qrc/qrc_m15_v2.py",
     "benchmarks/algorithms/qrc/qrc_multifreq_benchmark.py",
@@ -68749,5 +68761,6 @@
     "Historical result archives, private intraday-market snapshots and fitted strategies",
     "Actual IBM/Braket QPU jobs, backend calibration snapshots and provider accounts",
     "Private control/evidence/freeze attestations and production integrations"
-  ]
+  ],
+  "release_validation": "See TEST_RESULTS.md for actual local and CI scope; historical archives not reproduced"
 }

@@ -11,6 +11,7 @@ QAE, QAOA-cardinality and signal-replication standalone packages.
 uv sync --locked --extra dev --python 3.12
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 uv run --no-sync pytest -q -m 'not slow'
 uv run --no-sync python tools/verify_release.py
+uv run --no-sync python tools/synthetic_release_smoke.py
 uv build
 ```
 

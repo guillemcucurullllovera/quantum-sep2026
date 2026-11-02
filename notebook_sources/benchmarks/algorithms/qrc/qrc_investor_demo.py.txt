@@ -1,3 +1,4 @@
+# RETIRED, unvalidated archival notebook source. Not a runnable or endorsed advantage demonstration.
 # Extracted first-party notebook code; execution outputs intentionally omitted.
 
 # Notebook cell

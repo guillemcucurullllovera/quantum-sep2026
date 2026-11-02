@@ -1,3 +1,4 @@
+# Archival notebook source; original indentation defects retained rather than guessing intended code.
 # Extracted first-party notebook code; execution outputs intentionally omitted.
 
 # Notebook cell
@@ -882,4 +883,3 @@ print(f"\nAll results saved to {output_dir.resolve}")
 
 
 # Notebook cell
-

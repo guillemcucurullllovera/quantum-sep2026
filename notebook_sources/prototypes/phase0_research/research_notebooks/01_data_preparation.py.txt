@@ -1,3 +1,4 @@
+# Archival notebook source; original indentation defects retained rather than guessing intended code.
 # Extracted first-party notebook code; execution outputs intentionally omitted.
 
 # Notebook cell
@@ -497,4 +498,3 @@ else:
 
 
 # Notebook cell
-

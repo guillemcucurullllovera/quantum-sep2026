@@ -17,3 +17,8 @@ packages; they are not private market observations or live hardware results.
 No GPL/AGPL/SSPL library is intentionally used. Mitiq and ucc were reviewed but not
 incorporated by the source project. Provider data terms and paid-solver licenses
 are separate; credentials and license keys are never distributed.
+
+The wheel license expression is `Apache-2.0 AND MIT` to describe the combined
+first-party/upstream distribution accurately. SciPy's distribution metadata also
+contains notices for bundled numerical runtimes; SciPy itself is BSD-licensed and
+is installed as a dependency, not copied into this repository or its wheel.
