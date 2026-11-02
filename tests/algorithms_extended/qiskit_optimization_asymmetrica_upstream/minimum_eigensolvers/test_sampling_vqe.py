@@ -1,0 +1,123 @@
+# This code is part of a Qiskit project.
+#
+# (C) Copyright IBM 2018, 2025.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""Test the Sampler VQE."""
+
+
+import unittest
+from functools import partial
+from tests.algorithms_extended.qiskit_optimization_asymmetrica_upstream import QiskitAlgorithmsTestCase
+
+import numpy as np
+from ddt import data, ddt
+from qiskit.circuit.library import RealAmplitudes
+from qiskit.quantum_info import Pauli
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit.utils.optionals import HAS_AER
+from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import Sampler, SamplerV2
+from scipy.optimize import minimize as scipy_minimize
+
+from algorithms_extended.qiskit_optimization_asymmetrica.minimum_eigensolvers import SamplingVQE
+from algorithms_extended.qiskit_optimization_asymmetrica.optimizers import OptimizerResult
+from algorithms_extended.qiskit_optimization_asymmetrica.utils import algorithm_globals
+
+
+# pylint: disable=invalid-name
+def _mock_optimizer(fun, x0, jac=None, bounds=None, inputs=None):
+    """A mock of a callable that can be used as minimizer in the VQE.
+
+    If ``inputs`` is given as a dictionary, stores the inputs in that dictionary.
+    """
+    result = OptimizerResult()
+    result.x = np.zeros_like(x0)
+    result.fun = fun(result.x)
+    result.nit = 0
+
+    if inputs is not None:
+        inputs.update({"fun": fun, "x0": x0, "jac": jac, "bounds": bounds})
+    return result
+
+
+@ddt
+class TestSamplerVQE(QiskitAlgorithmsTestCase):
+    """Test VQE"""
+
+    @unittest.skipUnless(HAS_AER, "qiskit-aer is required to run this test")
+    def setUp(self):
+        super().setUp()
+        self.optimal_value = -1.38
+        self.optimal_bitstring = "10"
+        self.seed = 42
+        algorithm_globals.random_seed = self.seed
+        self.sampler = {
+            "v1": Sampler(run_options={"seed_simulator": self.seed}),
+            "v2": SamplerV2(seed=self.seed),
+        }
+        self.pass_manager = generate_preset_pass_manager(
+            optimization_level=1, target=AerSimulator().target, seed_transpiler=self.seed
+        )
+        algorithm_globals.random_seed = self.seed
+
+    @data("v1", "v2")
+    def test_optimizer_scipy_callable(self, version):
+        """Test passing a SciPy optimizer directly as callable."""
+        # Note: if maxiter is set too low, it may be automatically rounded up by `minimize`
+        maxiter = 10
+        vqe = SamplingVQE(
+            self.sampler[version],
+            RealAmplitudes(),
+            partial(scipy_minimize, method="COBYLA", options={"maxiter": maxiter}),
+            pass_manager=self.pass_manager,
+        )
+        result = vqe.compute_minimum_eigenvalue(Pauli("Z"))
+        self.assertEqual(result.cost_function_evals, maxiter)
+
+    @data("v1", "v2")
+    def test_optimizer_callable(self, version):
+        """Test passing a optimizer directly as callable."""
+        ansatz = RealAmplitudes(1, reps=1)
+        vqe = SamplingVQE(
+            self.sampler[version], ansatz, _mock_optimizer, pass_manager=self.pass_manager
+        )
+        result = vqe.compute_minimum_eigenvalue(Pauli("Z"))
+        self.assertTrue(np.all(result.optimal_point == np.zeros(ansatz.num_parameters)))
+
+    @data("v1", "v2")
+    def test_aggregation(self, version):
+        """Test the aggregation works."""
+
+        # test a custom aggregation that just uses the best measurement
+        def best_measurement(measurements):
+            res = min(measurements, key=lambda meas: meas[1])[1]
+            return res
+
+        # test CVaR with alpha of 0.4 (i.e. 40% of the best measurements)
+        alpha = 0.4
+
+        ansatz = RealAmplitudes(1, reps=0)
+        ansatz.h(0)
+
+        for aggregation in [alpha, best_measurement]:
+            with self.subTest(aggregation=aggregation):
+                vqe = SamplingVQE(
+                    self.sampler[version],
+                    ansatz,
+                    _mock_optimizer,
+                    aggregation=best_measurement,
+                    pass_manager=self.pass_manager,
+                )
+                result = vqe.compute_minimum_eigenvalue(Pauli("Z"))
+
+                # evaluation at x0=0 samples -1 and 1 with 50% probability, and our aggregation
+                # takes the smallest value
+                self.assertAlmostEqual(result.optimal_value, -1)

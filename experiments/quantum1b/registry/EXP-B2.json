@@ -1,0 +1,17 @@
+{
+  "experiment_id": "EXP-B2",
+  "track": "B",
+  "hypothesis": "CVaR estimation quality (agreement with the exact statevector-computed CVaR) degrades predictably with fewer shots.",
+  "benchmark_problem": "Best (family, n, p, alpha) cell from EXP-B1",
+  "classical_comparator": "n/a",
+  "quantum_method": "Shot-based sampling from the exact optimized statevector distribution, deterministic RNG",
+  "metrics": ["abs_cvar_shots_minus_cvar_exact"],
+  "seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "stopping_rule": "fixed shot grid [256, 1024, 4096, 16384], no early stop",
+  "compute_budget": "< 15 minutes",
+  "pass_fail_interpretation": {
+    "descriptive_only": "no gate -- informs whether a future hardware experiment's shot budget would be adequate"
+  },
+  "evidence_level": "C",
+  "prohibited_conclusion": "none"
+}

@@ -1,0 +1,283 @@
+# This code is part of a Qiskit project.
+#
+# (C) Copyright IBM 2020, 2025.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""Test Grover Optimizer."""
+
+import unittest
+from tests.algorithms_extended.qiskit_optimization_asymmetrica_upstream import QiskitOptimizationTestCase
+
+import numpy as np
+from ddt import data, ddt
+from docplex.mp.model import Model
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit.utils import optionals
+from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import Sampler, SamplerV2
+
+from algorithms_extended.qiskit_optimization_asymmetrica.algorithms import (
+    GroverOptimizer,
+    MinimumEigenOptimizer,
+    OptimizationResultStatus,
+)
+from algorithms_extended.qiskit_optimization_asymmetrica.converters import (
+    InequalityToEquality,
+    IntegerToBinary,
+    LinearEqualityToPenalty,
+    MaximizeToMinimize,
+    QuadraticProgramToQubo,
+)
+from algorithms_extended.qiskit_optimization_asymmetrica.minimum_eigensolvers import NumPyMinimumEigensolver
+from algorithms_extended.qiskit_optimization_asymmetrica.problems import QuadraticProgram
+from algorithms_extended.qiskit_optimization_asymmetrica.translators import from_docplex_mp
+from algorithms_extended.qiskit_optimization_asymmetrica.utils import algorithm_globals
+
+
+@ddt
+class TestGroverOptimizer(QiskitOptimizationTestCase):
+    """GroverOptimizer tests."""
+
+    @unittest.skipUnless(optionals.HAS_AER, "qiskit-aer is required to run this test")
+    def setUp(self):
+        super().setUp()
+        algorithm_globals.random_seed = 1
+        self.sampler = {
+            "v1": Sampler(run_options={"seed_simulator": 123, "shots": 20000}),
+            "v2": SamplerV2(seed=123, default_shots=20000),
+        }
+        self.pass_manager = generate_preset_pass_manager(
+            optimization_level=1, target=AerSimulator().target
+        )
+        self.n_iter = 8
+
+    def _prepare_grover_optimizer(self, num_value_qubits, num_iterations, version, converters=None):
+        """Prepare GroverOptimizer."""
+        grover_optimizer = GroverOptimizer(
+            num_value_qubits=num_value_qubits,
+            num_iterations=num_iterations,
+            converters=converters,
+            sampler=self.sampler[version],
+            pass_manager=self.pass_manager,
+        )
+        return grover_optimizer
+
+    def validate_results(self, problem, results):
+        """Validate the results object returned by GroverOptimizer."""
+        # Get expected value.
+        solver = MinimumEigenOptimizer(NumPyMinimumEigensolver())
+        comp_result = solver.solve(problem)
+        # Validate results.
+        np.testing.assert_array_almost_equal(comp_result.x, results.x)
+        self.assertEqual(comp_result.fval, results.fval)
+        # optimizer internally deals with minimization problem
+        self.assertAlmostEqual(
+            results.fval, problem.objective.sense.value * results.intermediate_fval
+        )
+
+    @data("v1", "v2")
+    def test_qubo_gas_int_zero(self, version):
+        """Test for when the answer is zero."""
+
+        # Input.
+        model = Model()
+        x_0 = model.binary_var(name="x0")
+        x_1 = model.binary_var(name="x1")
+        model.minimize(0 * x_0 + 0 * x_1)
+        op = from_docplex_mp(model)
+
+        # Will not find a negative, should return 0.
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=1,
+            num_iterations=1,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        np.testing.assert_array_almost_equal(results.x, [0, 0])
+        self.assertEqual(results.fval, 0.0)
+        self.assertAlmostEqual(results.fval, results.intermediate_fval)
+
+    @data("v1", "v2")
+    def test_qubo_gas_int_simple(self, version):
+        """Test for simple case, with 2 linear coeffs and no quadratic coeffs or constants."""
+
+        # Input.
+        model = Model()
+        x_0 = model.binary_var(name="x0")
+        x_1 = model.binary_var(name="x1")
+        model.minimize(-x_0 + 2 * x_1)
+        op = from_docplex_mp(model)
+
+        # Get the optimum key and value.
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=4,
+            num_iterations=self.n_iter,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        self.validate_results(op, results)
+
+        self.assertIsNotNone(results.operation_counts)
+        self.assertEqual(results.n_input_qubits, 2)
+        self.assertEqual(results.n_output_qubits, 4)
+
+    @data("v1", "v2")
+    def test_qubo_gas_int_simple_maximize(self, version):
+        """Test for simple case, but with maximization."""
+
+        # Input.
+        model = Model()
+        x_0 = model.binary_var(name="x0")
+        x_1 = model.binary_var(name="x1")
+        model.maximize(-x_0 + 2 * x_1)
+        op = from_docplex_mp(model)
+
+        # Get the optimum key and value.
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=4,
+            num_iterations=self.n_iter,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        self.validate_results(op, results)
+
+    @data("v1", "v2")
+    def test_qubo_gas_int_paper_example(self, version):
+        """
+        Test the example from https://arxiv.org/abs/1912.04088
+        """
+
+        # Input.
+        model = Model()
+        x_0 = model.binary_var(name="x0")
+        x_1 = model.binary_var(name="x1")
+        x_2 = model.binary_var(name="x2")
+        model.minimize(-x_0 + 2 * x_1 - 3 * x_2 - 2 * x_0 * x_2 - 1 * x_1 * x_2)
+        op = from_docplex_mp(model)
+
+        # Get the optimum key and value.
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=6,
+            num_iterations=self.n_iter,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        self.validate_results(op, results)
+
+    @data("v1", "v2")
+    def test_converter_list(self, version):
+        """Test converters list"""
+        # Input.
+
+        model = Model()
+        x_0 = model.binary_var(name="x0")
+        x_1 = model.binary_var(name="x1")
+        model.maximize(-x_0 + 2 * x_1)
+        op = from_docplex_mp(model)
+
+        # Get the optimum key and value.
+        # a single converter.
+        qp2qubo = QuadraticProgramToQubo()
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=4,
+            num_iterations=self.n_iter,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        self.validate_results(op, results)
+
+        # a list of converters
+        ineq2eq = InequalityToEquality()
+        int2bin = IntegerToBinary()
+        penalize = LinearEqualityToPenalty()
+        max2min = MaximizeToMinimize()
+        converters = [ineq2eq, int2bin, penalize, max2min]
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=4,
+            num_iterations=self.n_iter,
+            converters=converters,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        self.validate_results(op, results)
+        # invalid converters
+        with self.assertRaises(TypeError):
+            invalid = [qp2qubo, "invalid converter"]
+            grover_optimizer = self._prepare_grover_optimizer(
+                4,
+                num_iterations=self.n_iter,
+                converters=invalid,
+                version=version,
+            )
+
+    @data("v1", "v2")
+    def test_samples_and_raw_samples(self, version):
+        """Test samples and raw_samples"""
+        algorithm_globals.random_seed = 2
+        op = QuadraticProgram()
+        op.integer_var(0, 3, "x")
+        op.binary_var("y")
+        op.minimize(linear={"x": 1, "y": 2})
+        op.linear_constraint(linear={"x": 1, "y": 1}, sense=">=", rhs=1, name="xy")
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=8, num_iterations=self.n_iter, version=version
+        )
+        opt_sol = 1
+        success = OptimizationResultStatus.SUCCESS
+        results = grover_optimizer.solve(op)
+        self.assertEqual(len(results.samples), 8)
+        self.assertEqual(len(results.raw_samples), 32)
+        self.assertAlmostEqual(sum(s.probability for s in results.samples), 1)
+        self.assertAlmostEqual(sum(s.probability for s in results.raw_samples), 1)
+        self.assertAlmostEqual(min(s.fval for s in results.samples), 0)
+        self.assertAlmostEqual(min(s.fval for s in results.samples if s.status == success), opt_sol)
+        self.assertAlmostEqual(min(s.fval for s in results.raw_samples), opt_sol)
+        for sample in results.raw_samples:
+            self.assertEqual(sample.status, success)
+        np.testing.assert_array_almost_equal(results.x, results.samples[0].x)
+        self.assertAlmostEqual(results.fval, results.samples[0].fval)
+        self.assertEqual(results.status, results.samples[0].status)
+        self.assertAlmostEqual(results.fval, results.raw_samples[0].fval)
+        self.assertEqual(results.status, results.raw_samples[0].status)
+        np.testing.assert_array_almost_equal([1, 0, 0, 0, 0], results.raw_samples[0].x)
+
+    @data("v1", "v2")
+    def test_bit_ordering(self, version):
+        """Test bit ordering"""
+        # test minimize
+        algorithm_globals.random_seed = 2
+        mdl = Model("docplex model")
+        x = mdl.binary_var("x")
+        y = mdl.binary_var("y")
+        mdl.minimize(x - 2 * y)
+        op = from_docplex_mp(mdl)
+        opt_sol = -2
+        success = OptimizationResultStatus.SUCCESS
+        grover_optimizer = self._prepare_grover_optimizer(
+            num_value_qubits=3,
+            num_iterations=self.n_iter,
+            version=version,
+        )
+        results = grover_optimizer.solve(op)
+        self.assertEqual(results.fval, opt_sol)
+        np.testing.assert_array_almost_equal(results.x, [0, 1])
+        self.assertEqual(results.status, success)
+        results.raw_samples.sort(key=lambda x: x.probability, reverse=True)
+        self.assertAlmostEqual(sum(s.probability for s in results.samples), 1, delta=1e-5)
+        self.assertAlmostEqual(sum(s.probability for s in results.raw_samples), 1, delta=1e-5)
+        self.assertAlmostEqual(min(s.fval for s in results.samples), -2)
+        self.assertAlmostEqual(min(s.fval for s in results.samples if s.status == success), opt_sol)
+        self.assertAlmostEqual(min(s.fval for s in results.raw_samples), opt_sol)
+        for sample in results.raw_samples:
+            self.assertEqual(sample.status, success)
+
+
+if __name__ == "__main__":
+    unittest.main()

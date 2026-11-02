@@ -1,0 +1,137 @@
+# This code is part of Qiskit.
+#
+# (C) Copyright IBM 2021.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+"""
+Experiment and analysis config dataclasses.
+"""
+from __future__ import annotations
+
+import dataclasses
+from typing import Any
+from typing import TYPE_CHECKING
+
+from qiskit.exceptions import QiskitError
+from qiskit_experiments.version import __version__
+
+if TYPE_CHECKING:
+    from typing import Self
+
+
+@dataclasses.dataclass(frozen=True)
+class ExperimentConfig:
+    """Store configuration settings for an Experiment class.
+
+    This stores the current configuration of a :class:`.BaseExperiment` and can be used to
+    reconstruct the experiment using either the :meth:`experiment` property if the experiment class
+    type is currently stored, or the :meth:`~.BaseExperiment.from_config` class method of the
+    appropriate experiment.
+    """
+
+    cls: type = None
+    args: tuple[Any] = dataclasses.field(default_factory=tuple)
+    kwargs: dict[str, Any] = dataclasses.field(default_factory=dict)
+    experiment_options: dict[str, Any] = dataclasses.field(default_factory=dict)
+    transpile_options: dict[str, Any] = dataclasses.field(default_factory=dict)
+    run_options: dict[str, Any] = dataclasses.field(default_factory=dict)
+    version: str = __version__
+
+    def __json_encode__(self) -> dict[str, Any]:
+        return self.__dict__
+
+    @classmethod
+    def __json_decode__(cls, value: dict[str, Any]) -> Self:
+        return cls(**value)
+
+    def experiment(self):
+        """Return the experiment constructed from this config.
+
+        Returns:
+            BaseExperiment: The experiment reconstructed from the config.
+
+        Raises:
+            QiskitError: If the experiment class is not stored,
+                         was not successful deserialized, or reconstruction
+                         of the experiment fails.
+        """
+        cls = self.cls
+        if cls is None:
+            raise QiskitError("No experiment class in experiment config")
+        if isinstance(cls, dict):
+            raise QiskitError(
+                "Unable to load experiment class. Try manually loading "
+                "experiment using `Experiment.from_config(config)` instead."
+            )
+        try:
+            return cls.from_config(self)
+        except Exception as ex:
+            msg = "Unable to construct experiments from config."
+            if cls.version != __version__:
+                msg += (
+                    f" Note that config version ({cls.version}) differs from the current"
+                    f" qiskit-experiments version ({__version__}). You could try"
+                    " installing a compatible qiskit-experiments version."
+                )
+            raise QiskitError(f"{msg}\nError Message:\n{str(ex)}") from ex
+
+
+@dataclasses.dataclass(frozen=True)
+class AnalysisConfig:
+    """Store configuration settings for an Analysis class.
+
+    This stores the current configuration of a :class:`.BaseAnalysis` and can be used to reconstruct
+    the analysis class using either the :meth:`analysis` property if the analysis class type is
+    currently stored, or the :meth:`~.BaseAnalysis.from_config` class method of the appropriate
+    experiment.
+    """
+
+    cls: type = None
+    args: tuple[Any] = dataclasses.field(default_factory=tuple)
+    kwargs: dict[str, Any] = dataclasses.field(default_factory=dict)
+    options: dict[str, Any] = dataclasses.field(default_factory=dict)
+    version: str = __version__
+
+    def __json_encode__(self) -> dict[str, Any]:
+        return self.__dict__
+
+    @classmethod
+    def __json_decode__(cls, value: dict[str, Any]) -> Self:
+        return cls(**value)
+
+    def analysis(self):
+        """Return the analysis class constructed from this config.
+
+        Returns:
+            BaseAnalysis: The analysis reconstructed from the config.
+
+        Raises:
+            QiskitError: If the analysis class is not stored,
+                         was not successful deserialized, or reconstruction
+                         of the analysis class fails.
+        """
+        cls = self.cls
+        if cls is None:
+            raise QiskitError("No analysis class in analysis config")
+        if isinstance(cls, dict):
+            raise QiskitError(
+                "Unable to load analysis class. Try manually loading "
+                "analysis using `Analysis.from_config(config)` instead."
+            )
+        try:
+            return cls.from_config(self)
+        except Exception as ex:
+            msg = "Unable to construct analysis from config."
+            if cls.version != __version__:
+                msg += (
+                    f" Note that config version ({cls.version}) differs from the current"
+                    f" qiskit-experiments version ({__version__}). You could try"
+                    " installing a compatible qiskit-experiments version."
+                )
+            raise QiskitError(f"{msg}\nError Message:\n{str(ex)}") from ex

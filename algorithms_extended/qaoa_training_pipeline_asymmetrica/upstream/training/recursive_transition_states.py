@@ -1,0 +1,154 @@
+"""Recursive transition states trainer."""
+
+from time import time
+
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
+
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.exceptions import TrainingError
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.base_trainer import BaseTrainer
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.param_result import ParamResult
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.scipy_trainer import ScipyTrainer
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.transition_states import TransitionStatesTrainer
+
+
+class RecursiveTransitionStates(BaseTrainer):
+    """Recursively train QAOA by constructing transition states.
+
+    This class uses an initial set of parameters for depth `p` QAOA to construct transition states
+    at depth `p+1`, from which the optimized parameters are used to construct the transition
+    states at the next depth `p+2`. This process continues until the specified depth is reached.
+    """
+
+    def __init__(self, trainer: ScipyTrainer):
+        """Initialize a recursion trainer.
+
+        Args:
+            trainer: The trainer must be the ScipyTrainer.
+        """
+        super().__init__(trainer.evaluator)
+
+        self._trainer = trainer
+        self._all_results = None
+
+    @property
+    def minimization(self) -> bool:
+        """Return True if the energy is minimized."""
+        return self._trainer.minimization
+
+    # pylint: disable=too-many-positional-arguments
+    def train(
+        self,
+        cost_op: SparsePauliOp,
+        mixer: QuantumCircuit | None = None,
+        initial_state: QuantumCircuit | None = None,
+        ansatz_circuit: QuantumCircuit | None = None,
+        params0: list[float] | None = None,
+        previous_optimal_point: list[float] | None = None,
+        reps: int | None = None,
+    ) -> ParamResult:
+        """
+        Args:
+            cost_op: The cost operator of the problem we want to solve.
+            previous_optimal_point: A local minima in beta and gamma from which to start
+                the transition states recursion.
+            reps: The number of QAOA layers we want to reach.
+            mixer: A quantum circuit representing the mixer of QAOA. This allows us to
+                accommodate, e.g., warm-start QAOA. If this is None, then we assume the
+                standard QAOA mixer.
+            initial_state: A quantum circuit that represents the initial state. If None is
+                given, then we default to the equal superposition state |+>.
+            ansatz_circuit: The ansatz circuit in case it differs from the standard QAOA
+                circuit.
+
+        Returns:
+            A `ParamResult` with optimization results.
+        """
+        previous_optimal_point = self._require(previous_optimal_point, "a previous_optimal_point.")
+        reps = self._require(reps, "reps")
+        start = time()
+        current_reps = len(previous_optimal_point) // 2
+        ts_state = previous_optimal_point
+        self._all_results, energy = dict(), None
+
+        if current_reps >= reps:
+            raise ValueError(
+                f"Current reps {current_reps} cannot be greater or equal than desired reps {reps}. "
+            )
+
+        while current_reps < reps:
+            ts_trainer = TransitionStatesTrainer(self._trainer)
+            result = ts_trainer.train(
+                cost_op,
+                mixer,
+                initial_state,
+                ansatz_circuit,
+                previous_optimal_point=ts_state,
+            )
+            ts_state = result["optimized_params"]
+            energy = result["energy"]
+            current_reps = len(ts_state) // 2
+            self._all_results[current_reps] = result.data
+
+        param_result = ParamResult(ts_state, time() - start, self, energy)
+        param_result.update(self._all_results)
+
+        return param_result
+
+    @classmethod
+    def from_config(cls, config: dict) -> "RecursiveTransitionStates":
+        """Create the trainer from a config file."""
+
+        if config["trainer"] != "ScipyTrainer":
+            raise TrainingError(
+                f"{cls.__name__} only uses ScipyTrainer as trainer. Received " + config["trainer"]
+            )
+
+        trainer = ScipyTrainer.from_config(config["trainer_init"])
+
+        return cls(trainer)
+
+    def to_config(self) -> dict:
+        """Return the configuration of the trainer."""
+        return {
+            "trainer_name": self.__class__.__name__,
+            "evaluator": self._evaluator.to_config() if self._evaluator else None,
+            "trainer": self._trainer.to_config(),
+        }
+
+    def parse_train_kwargs(self, args_str: str | None = None) -> dict:
+        """Parse a string into the training kwargs."""
+        train_kwargs = dict()
+        for key, val in self.extract_train_kwargs(args_str).items():
+            if key == "reps":
+                train_kwargs[key] = int(val)
+            elif key == "previous_optimal_point":
+                train_kwargs[key] = self.extract_list(val, dtype=float)
+            else:
+                raise ValueError("Unknown key in provided train_kwargs.")
+
+        return train_kwargs
+
+    def plot(
+        self,
+        axis: Axes | None = None,
+        fig: Figure | None = None,
+        **plot_args,
+    ):
+        """Plot the energy progression throughout the recursion."""
+        if axis is None or fig is None:
+            fig, axis = plt.subplots(1, 1)
+
+        assert self._all_results, "_all_results must be defined before calling plot()"
+        rts_idx = sorted(self._all_results.keys())
+        energies = [self._all_results[key]["energy"] for key in rts_idx]
+
+        axis.plot(rts_idx, energies, label="Energy", **plot_args)
+        axis.set_xlabel("Recursion level")
+        axis.set_ylabel("Energy")
+        axis.legend()
+
+        return fig, axis

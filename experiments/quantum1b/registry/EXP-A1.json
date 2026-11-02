@@ -1,0 +1,18 @@
+{
+  "experiment_id": "EXP-A1",
+  "track": "A",
+  "hypothesis": "The Fortet-linearized scipy.optimize.milp (HiGHS) solver returns the exact global optimum, agreeing with exhaustive enumeration on every tiny instance (n<=18) in the benchmark ladder.",
+  "benchmark_problem": "Synthetic OptionSelectionInstance ladder, all families (experiments.quantum1b.generators.FAMILIES), n in [4,6,8,10,12,14,16,18]",
+  "classical_comparator": "Exhaustive enumeration (ground truth)",
+  "quantum_method": null,
+  "metrics": ["objective_value_agreement", "feasible_set_membership_agreement"],
+  "seeds": [0, 1, 2, 3, 4],
+  "stopping_rule": "run to completion, bounded by n<=18",
+  "compute_budget": "< 5 minutes total",
+  "pass_fail_interpretation": {
+    "PASS": "100% of (family, n, seed) cells agree within tolerance 1e-6",
+    "FAIL": "any disagreement -- a P0 defect in the linearization, blocks downstream Track A/B comparisons until fixed"
+  },
+  "evidence_level": "A",
+  "prohibited_conclusion": "none -- this is a correctness gate, not a scientific claim"
+}

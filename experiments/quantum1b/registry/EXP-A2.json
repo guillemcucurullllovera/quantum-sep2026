@@ -1,0 +1,18 @@
+{
+  "experiment_id": "EXP-A2",
+  "track": "A",
+  "hypothesis": "The linearized-MILP comparator remains tractable up to the largest ladder size tested, so Track B never faces a weaker classical opponent than Track A could produce.",
+  "benchmark_problem": "Ladder n in [8,12,16,20,24], family='dense' (worst case for the O(n^2) linearization)",
+  "classical_comparator": "n/a -- this experiment characterizes Track A itself",
+  "quantum_method": null,
+  "metrics": ["wall_clock_runtime_s", "n_auxiliary_variables", "highs_solver_status"],
+  "seeds": [0, 1, 2],
+  "stopping_rule": "120s wall-clock cap per solve; on timeout, fall back to simulated_annealing_qubo (n_iters=20000, 5 restarts, seeds 0-4), explicitly labeled heuristic not exact",
+  "compute_budget": "< 30 minutes total",
+  "pass_fail_interpretation": {
+    "READY": "every n<=16 solves exactly within budget (the range Track B's statevector simulation can reach at all)",
+    "NOT_READY": "otherwise"
+  },
+  "evidence_level": "A",
+  "prohibited_conclusion": "none"
+}

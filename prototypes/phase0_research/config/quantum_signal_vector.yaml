@@ -1,0 +1,208 @@
+# quantum_signal_vector.yaml
+# Asymmetrica Investments AG — Quantum Signal Generation
+# Defines the feature → qubit mapping for the VQC signal combiner
+# Version 0.1 | April 2026 | CONFIDENTIAL
+
+version: "0.1"
+target_qubits: 14
+fallback_qubits: 8  # reduced version for faster simulation
+
+features:
+  # === MOMENTUM BLOCK (2 features) ===
+  momentum_composite:
+    qubit: 0
+    source: derived
+    inputs: [technical.rsi, technical.macd_cross, technical.bb_position_ratio]
+    method: pca_first_component
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: 60s
+    description: "PCA-reduced momentum score from RSI + MACD + BB"
+
+  momentum_acceleration:
+    qubit: 1
+    source: derived
+    inputs: [momentum_composite_t, momentum_composite_t-1]
+    method: first_difference
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: 60s
+    description: "Rate of change of momentum composite"
+
+  # === VOLATILITY BLOCK (3 features) ===
+  realized_vol_20d:
+    qubit: 2
+    source: derived
+    inputs: [price_returns_20d]
+    method: annualized_std
+    normalization: percentile_rank
+    range: [0, 1]
+    update_frequency: daily
+    description: "20-day realized volatility as percentile rank"
+
+  vol_regime:
+    qubit: 3
+    source: derived
+    inputs: [realized_vol_20d, vol_history_252d]
+    method: percentile_threshold
+    encoding: [0, 1, 2]  # low / normal / high
+    normalization: divide_by_2  # maps to [0, 0.5, 1.0]
+    range: [0, 1]
+    update_frequency: daily
+    description: "Volatility regime classification (VIX percentile-based)"
+
+  atr_normalized:
+    qubit: 4
+    source: technical
+    inputs: [technical.atr, technical.price]
+    method: divide
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: 60s
+    description: "ATR as percentage of price"
+
+  # === MACRO BLOCK (3 features) ===
+  carry_differential:
+    qubit: 5
+    source: macro
+    inputs: [macro.carry_differential]
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: daily
+    description: "Interest rate differential (base - quote)"
+
+  yield_curve_slope:
+    qubit: 6
+    source: macro_extended
+    inputs: [fred.us10y, fred.us2y]
+    method: subtract
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: daily
+    description: "US 10Y - 2Y yield spread"
+    status: requires_agent_fix  # macro agent needs FRED connection
+
+  event_risk_score:
+    qubit: 7
+    source: derived
+    inputs: [macro.hours_to_next_event, macro.event_impact]
+    method: "1 / (1 + hours) * impact_weight"
+    normalization: none  # already [0, 1]
+    range: [0, 1]
+    update_frequency: 60s
+    description: "Continuous event proximity risk (replaces binary blackout)"
+
+  # === SENTIMENT BLOCK (2 features) ===
+  net_sentiment:
+    qubit: 8
+    source: derived
+    inputs: [news.base_bull, news.base_bear, news.quote_bull, news.quote_bear]
+    method: "(base_bull - base_bear) / base_total - (quote_bull - quote_bear) / quote_total"
+    normalization: clip_and_scale  # clip to [-1, 1]
+    range: [-1, 1]
+    update_frequency: 60s
+    description: "Net sentiment differential (base vs quote currency)"
+
+  sentiment_momentum:
+    qubit: 9
+    source: derived
+    inputs: [net_sentiment_t, net_sentiment_t-3]
+    method: first_difference
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: daily
+    description: "3-day change in net sentiment"
+
+  # === POSITIONING BLOCK (2 features) ===
+  cot_positioning:
+    qubit: 10
+    source: derived
+    inputs: [fundamental.base_cot_net_pct, fundamental.quote_cot_net_pct]
+    method: subtract
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: weekly
+    description: "COT net positioning differential"
+
+  cot_extreme:
+    qubit: 11
+    source: derived
+    inputs: [fundamental.base_cot_net, cot_history_52w]
+    method: zscore
+    normalization: clip_and_scale  # clip to [-3, 3], scale to [-1, 1]
+    range: [-1, 1]
+    update_frequency: weekly
+    description: "COT z-score vs 1-year history (contrarian signal)"
+
+  # === CROSS-ASSET BLOCK (2 features) ===
+  dxy_momentum:
+    qubit: 12
+    source: cross_asset
+    inputs: [dxy_price_5d]
+    method: pct_return
+    normalization: standard_scaler
+    range: [-1, 1]
+    update_frequency: daily
+    description: "Dollar index 5-day return"
+
+  risk_sentiment:
+    qubit: 13
+    source: technical.commodity
+    inputs: [vix_level]
+    method: identity
+    normalization: percentile_rank
+    range: [0, 1]
+    update_frequency: 60s
+    description: "VIX level as percentile rank"
+    status: requires_vix_pipe  # VIX exists but not piped to fusion
+
+# === ENCODING CONFIG ===
+encoding:
+  method: angle_encoding  # RY(feature * pi) per qubit
+  circuit_depth: 3        # variational layers
+  entanglement: linear    # CNOT chain (qubit_i → qubit_i+1)
+  optimizer: cobyla       # gradient-free optimizer for NISQ
+  max_iterations: 200
+  shots: 1024
+
+# === 8-QUBIT REDUCED VERSION ===
+reduced_8q:
+  description: "Reduced feature set for faster simulation (laptop-friendly)"
+  features:
+    - momentum_composite     # qubit 0
+    - realized_vol_20d       # qubit 1
+    - vol_regime             # qubit 2
+    - carry_differential     # qubit 3
+    - event_risk_score       # qubit 4
+    - net_sentiment          # qubit 5
+    - cot_positioning        # qubit 6
+    - risk_sentiment         # qubit 7
+  encoding:
+    method: angle_encoding
+    circuit_depth: 4  # can afford deeper circuit with fewer qubits
+    entanglement: full  # all-to-all CNOT with 8 qubits
+    optimizer: cobyla
+    max_iterations: 300
+    shots: 2048
+
+# === QAOA CONFIG (separate from VQC) ===
+qaoa:
+  description: "QAOA pair selection — operates on price data, not agent signals"
+  input:
+    universe: "SP500_top50"
+    lookback_years: 3
+    cointegration_test: engle_granger
+    p_value_threshold: 0.05
+  qubo:
+    alpha_weight: 1.0         # reward expected Sharpe
+    correlation_penalty: -0.5  # penalize correlated pairs
+    max_pairs: 15             # cardinality constraint
+  solver:
+    qaoa_depth: [1, 2, 3]    # test p=1,2,3
+    optimizer: cobyla
+    shots: 4096
+    backend: aer_simulator
+  benchmark:
+    - exhaustive              # if n <= 20
+    - simulated_annealing     # D-Wave Ocean
+    - scipy_milp              # classical baseline

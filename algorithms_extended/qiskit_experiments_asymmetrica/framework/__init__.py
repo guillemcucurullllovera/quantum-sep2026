@@ -1,0 +1,209 @@
+# This code is part of Qiskit.
+#
+# (C) Copyright IBM 2021.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""
+==========================================================
+Experiment Framework (:mod:`algorithms_extended.qiskit_experiments_asymmetrica.framework`)
+==========================================================
+
+.. currentmodule:: algorithms_extended.qiskit_experiments_asymmetrica.framework
+
+Overview
+========
+
+The experiment framework broadly defines an experiment as the execution of one or more
+circuits on a device, and analysis of the resulting measurement data
+to return one or more derived results.
+
+The interface for running an experiment is through the ``Experiment`` classes subclassed from
+:class:`.BaseExperiment`, such as those contained in the :mod:`~algorithms_extended.qiskit_experiments_asymmetrica.library`. The
+following pseudo-code illustrates the typical workflow in Qiskit Experiments for
+
+- Initializing a new experiment
+- Running the experiment on a backend
+- Saving result to an online database (for compatible providers)
+- Viewing analysis results
+
+.. code-block:: python
+
+    # Import an experiment
+    from algorithms_extended.qiskit_experiments_asymmetrica.library import SomeExperiment
+
+    # Initialize with desired qubits and options
+    exp = SomeExperiment(physical_qubits, **options)
+
+    # Run on a backend
+    exp_data = exp.run(backend)
+
+    # Wait for execution and analysis to finish
+    exp_data.block_for_results()
+
+    # Optionally save results to database
+    exp_data.save()
+
+    # View analysis results
+    print(exp_data.analysis_results(dataframe=True))
+
+The experiment class contains information for generating circuits and analysis
+of results. These can typically be configured with a variety of options.
+Once all options are set, you can call the :meth:`.BaseExperiment.run` method to run
+the experiment on a Qiskit compatible ``backend``.
+
+The steps of running an experiment involves generation experimental circuits
+according to the options you set and submission of a job to the specified
+``backend``. Once the job has finished executing an analysis job performs
+data analysis of the experiment execution results.
+
+The result of running an experiment is an :class:`ExperimentData` container
+which contains the analysis results, any figures generated during analysis,
+and the raw measurement data. These can each be accessed using the
+:meth:`.ExperimentData.analysis_results`, :meth:`.ExperimentData.figure`
+and :meth:`.ExperimentData.data` methods respectively. Additional metadata
+for the experiment itself can be added via :meth:`.ExperimentData.metadata`.
+
+
+Classes
+=======
+
+Experiment Data Classes
+***********************
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    ExperimentData
+    ExperimentStatus
+    AnalysisStatus
+    AnalysisResult
+    AnalysisResultData
+    AnalysisResultTable
+    ExperimentConfig
+    AnalysisConfig
+    ExperimentEncoder
+    ExperimentDecoder
+    ArtifactData
+    FigureData
+    Provider
+    BaseProvider
+    ExperimentService
+    Job
+    BaseJob
+    ExtendedJob
+    MeasLevel
+    MeasReturnType
+
+.. _composite-experiment:
+
+Composite Experiment Classes
+****************************
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    CompositeExperiment
+    ParallelExperiment
+    BasicExperiment
+    BatchExperiment
+    TiledExperiment
+    CompositeAnalysis
+
+Base Classes
+************
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    BaseExperiment
+    BaseAnalysis
+
+Experiment Configuration Helper Classes
+***************************************
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    BackendData
+    BackendTiming
+
+Backend Partition Utilities
+****************************
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    build_coupling_graph
+    build_distance_graph
+    build_line_graph
+    partition_nodes
+    partition_edges
+    partition_qubits
+    partition_qubit_pairs
+
+"""
+from qiskit.providers.options import Options
+from algorithms_extended.qiskit_experiments_asymmetrica.framework.backend_data import BackendData
+from algorithms_extended.qiskit_experiments_asymmetrica.framework.analysis_result import AnalysisResult
+from algorithms_extended.qiskit_experiments_asymmetrica.framework.status import (
+    ExperimentStatus,
+    AnalysisStatus,
+    AnalysisCallback,
+)
+from algorithms_extended.qiskit_experiments_asymmetrica.framework.containers import (
+    ArtifactData,
+    FigureData,
+    FigureType,
+)
+from .provider_interfaces import (
+    BaseJob,
+    BaseProvider,
+    ExperimentService,
+    ExtendedJob,
+    Job,
+    MeasLevel,
+    MeasReturnType,
+    Provider,
+    __local_type_aliases__ as _provider_type_aliases,
+)
+
+from .base_analysis import BaseAnalysis
+from .base_experiment import BaseExperiment
+from .backend_timing import BackendTiming
+from .configs import ExperimentConfig, AnalysisConfig
+from .analysis_result_data import AnalysisResultData
+from .analysis_result_table import AnalysisResultTable
+from .experiment_data import ExperimentData
+from .composite import (
+    ParallelExperiment,
+    BatchExperiment,
+    CompositeExperiment,
+    CompositeAnalysis,
+    BasicExperiment,
+    TiledExperiment,
+)
+from .backend_partition import (
+    build_coupling_graph,
+    build_distance_graph,
+    build_line_graph,
+    partition_nodes,
+    partition_edges,
+    partition_qubits,
+    partition_qubit_pairs,
+)
+from .json import ExperimentEncoder, ExperimentDecoder
+
+
+def _promote_type_aliases(module_name: str, alias_dict: dict[str, str]):
+    """Helper to promote type aliases to fully qualified names for convert_type_alias_docstrings"""
+    return {f"{module_name}.{name}": value for name, value in alias_dict.items()}
+
+
+__type_aliases__ = _promote_type_aliases(__name__, _provider_type_aliases)

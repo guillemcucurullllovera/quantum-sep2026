@@ -1,0 +1,307 @@
+#
+#
+# (C) Copyright IBM 2025.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""Functions for angle trainers."""
+
+from abc import ABC, abstractmethod
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.axes import Axes
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+
+class BaseAnglesFunction(ABC):
+    """A base class to define the interface of QAOA angle functions."""
+
+    @abstractmethod
+    def __call__(self, x: list) -> list:
+        """Compute the QAOA angles from the optimization variables x."""
+
+    def to_config(self) -> dict:
+        """Creates a serializable dictionary of the class."""
+        return {"function_name": self.__class__.__name__}
+
+    @classmethod
+    @abstractmethod
+    def from_config(cls, config: dict) -> None:
+        """Initialize the function from a config."""
+
+
+class IdentityFunction(BaseAnglesFunction):
+    """Identity function."""
+
+    def __call__(self, x: list) -> list:
+        """Identity function."""
+        return x
+
+    # pylint: disable=unused-argument
+    @classmethod
+    def from_config(cls, config: dict):
+        """Initialize the Identity function."""
+        return cls()
+
+
+# cspell:ignore Zhou
+class FourierFunction(BaseAnglesFunction):
+    r"""Computes the QAOA angles from the optimization variables x using a Fourier series.
+
+    This is the function that is implemented in Zhou et al. PRX 10, 021067 (2020). It computes
+    the beta and gamma angles as follows for a depth-`p` QAOA circuit
+
+    .. math::
+        \beta_i = \sum_{k=1}^{q} u_k \sin[(k-1/2)(i-1/2)\pi/p]
+        \gamma_i = \sum_{k=1}^{q} v_k \cos[(k-1/2)(i-1/2)\pi/p]
+    """
+
+    def __init__(self, depth: int | None = None) -> None:
+        """Initialize the Fourier function.
+
+        Args:
+            depth: The depth of the QAOA circuit. The length of the `beta` and `gamma`
+                angles is given by depth. If depth is None, then the QAOA depth will be the
+                same as the number of Fourier coefficients. This corresponds to the
+                FOURIER[∞; 0] from the Zhou et al. PRX 10, 021067 (2020).
+        """
+        self._depth = depth
+
+    def __call__(self, x: list) -> list:
+        """Compute beta and gamma angles from the optimization variables x.
+
+        We assume that the first half of `x` are the Fourier coefficients for `beta` and the
+        second half are the coefficients for `gamma`. Furthermore, this function assumes that
+        the QAOA depth is given either by its internal variable `self._depth` or by `x` if
+        `self._depth` is None.
+        """
+        n_coef = len(x) // 2
+
+        qaoa_reps = n_coef if self._depth is None else self._depth
+
+        betas, gammas = [], []
+        for i_idx in range(qaoa_reps):
+            beta_i = 0
+
+            # Note the +0.5 which accounts for the indices starting at 0.
+            for k_idx, val in enumerate(x[:n_coef]):
+                beta_i += val * np.cos((k_idx + 0.5) * (i_idx + 0.5) * np.pi / qaoa_reps)
+
+            gamma_i = 0
+            for k_idx, val in enumerate(x[n_coef:]):
+                gamma_i += val * np.sin((k_idx + 0.5) * (i_idx + 0.5) * np.pi / qaoa_reps)
+
+            betas.append(beta_i)
+            gammas.append(gamma_i)
+
+        return betas + gammas
+
+    def to_config(self) -> dict:
+        """Creates a serializable dictionary of the class."""
+        config = super().to_config()
+        config["depth"] = self._depth
+        return config
+
+    @classmethod
+    def from_config(cls, config: dict) -> "FourierFunction":
+        """Initialize the Fourier function."""
+        return cls(config.get("depth", None))
+
+    def plot_angles(self, x: list, axis: Axes | None = None, plot_args: dict | None = None) -> Axes:
+        """Plot the QAOA angles.
+
+        Args:
+            x: The coefficients in the Fourier basis. The first half store the coefficients for
+                beta and the second half store the coefficients for gamma.
+            axis: The axis on which to plot.
+            plot_args: Additional arguments to pass to the plot. These are split into
+                two sub-dictionaries with keys `beta` and `gamma`.
+        """
+        axis = axis or plt.gca()
+
+        if plot_args is None:
+            plot_args = {"beta": {}, "gamma": {}}
+
+        if "ls" not in plot_args["beta"]:
+            plot_args["beta"]["ls"] = "--"
+
+        qaoa_angles = self(x)
+        reps = len(qaoa_angles) // 2
+        assert isinstance(self._depth, int)
+        xvals = list(range(1, self._depth + 1))
+        axis.plot(xvals, qaoa_angles[:reps], label=r"$\beta$", **plot_args["beta"])
+        axis.plot(xvals, qaoa_angles[reps:], label=r"$\gamma$", **plot_args["gamma"])
+        axis.legend()
+
+        return axis
+
+    def plot_basis(self, x: list, axis: Axes | None = None, plot_args: dict | None = None) -> Axes:
+        """Plot the Fourier basis functions.
+
+        Args:
+            x: The coefficients in the Fourier basis. The first half store the coefficients for
+                beta and the second half store the coefficients for gamma.
+            axis: The axis on which to plot.
+            plot_args: Additional arguments to pass to the plot. These are split into
+                two sub-dictionaries with keys `beta` and `gamma`.
+        """
+        axis = axis or plt.gca()
+
+        n_coef = len(x) // 2
+        qaoa_reps = n_coef if self._depth is None else self._depth
+
+        assert isinstance(self._depth, int)
+        ivals = np.linspace(0, self._depth, 50)
+
+        if plot_args is None:
+            plot_args = {"beta": {}, "gamma": {}}
+
+        if "ls" not in plot_args["beta"]:
+            plot_args["beta"]["ls"] = "--"
+
+        for k_idx in range(n_coef):
+            coef = (k_idx + 0.5) * np.pi / qaoa_reps
+
+            lbl = r"$\beta$ basis" if k_idx == 0 else None
+
+            axis.plot(
+                ivals,
+                [x[k_idx] * np.cos(coef * (ival + 0.5)) for ival in ivals],
+                label=lbl,
+                **plot_args["beta"],
+            )
+
+            lbl = r"$\gamma$ basis" if k_idx == 0 else None
+
+            axis.plot(
+                ivals,
+                [x[k_idx + n_coef] * np.sin(coef * (ival + 0.5)) for ival in ivals],
+                label=lbl,
+                **plot_args["gamma"],
+            )
+
+        axis.legend()
+
+        return axis
+
+
+class PCAFunction(BaseAnglesFunction):
+    """Performs a PCA transform of the QAOA angles.
+
+    The PCA QAOA angle function is inspired from O. Parry and P. McMinn, "QAOA-PCA: Enhancing
+    efficiency in the quantum approximate optimization algorithm via principal component
+    analysis", arXiv:2504.16755.
+    """
+
+    def __init__(self, num_components: int):
+        """Initialize a PCA angles function for QAOA.
+
+        Args:
+            num_components: The number of PCA components.
+        """
+        self._num_components = num_components
+        self._scaler = StandardScaler()
+        self._pca = PCA(self._num_components)
+        self._is_fitted = False
+
+    @property
+    def is_fitted(self) -> bool:
+        """Return true if self has been fitted to data."""
+        return self._is_fitted
+
+    def fit(self, data):
+        """Fit the PCA function."""
+        data_ = self._scaler.fit_transform(data)
+        self._pca.fit(data_)
+        self._is_fitted = True
+
+    def __call__(self, x: list) -> list:
+        """Compute the QAOA angles from the principal components.
+
+        Here, `x` is a list of floats with the same length as the number of PCA components.
+        The returned is a list of QAOA angles.
+        """
+        if not self._is_fitted:
+            raise ValueError(f"Fit {self.__class__.__name__} to compute the QAOA angles.")
+
+        # Reconstruct standardized data from PCA
+        angles_scaled = self._pca.inverse_transform(np.array([x]))
+
+        # Convert back to original scale
+        qaoa_angles = self._scaler.inverse_transform(angles_scaled)
+
+        return qaoa_angles[0]
+
+    def transform(self, x: list) -> list:
+        """Convert QAOA angles to their principle components."""
+        if not self._is_fitted:
+            raise ValueError(f"Fit {self.__class__.__name__} to compute the principal components.")
+
+        x_scaled = self._scaler.transform([x])
+        return self._pca.transform(x_scaled)[0]
+
+    def to_config(self) -> dict:
+        """Creates a serializable dictionary of the class."""
+        config = super().to_config()
+        config["num_components"] = self._num_components
+
+        def scaler_to_list(scaler):
+            if scaler is None:
+                return None
+            if isinstance(scaler, np.ndarray):
+                return scaler.tolist()
+            return [scaler]
+
+        if self._is_fitted:
+            config["scaler"] = {
+                "mean": scaler_to_list(self._scaler.mean_),
+                "scale": scaler_to_list(self._scaler.scale_),
+                "var": scaler_to_list(self._scaler.var_),
+            }
+
+            config["pca"] = {
+                "components": self._pca.components_.tolist(),
+                "mean": self._pca.mean_.tolist(),
+                "explained_variance": self._pca.explained_variance_.tolist(),
+                "explained_variance_ratio": self._pca.explained_variance_ratio_.tolist(),
+            }
+
+        return config
+
+    @classmethod
+    def from_config(cls, config: dict) -> "PCAFunction":
+        """Initialize the Fourier function."""
+
+        pca_func = cls(config["num_components"])
+
+        if "scaler" in config:
+            scaler_params = config["scaler"]
+            pca_func._scaler.mean_ = np.array(scaler_params["mean"])
+            pca_func._scaler.scale_ = np.array(scaler_params["scale"])
+            pca_func._scaler.var_ = np.array(scaler_params["var"])
+            # Use object.__setattr__ to set read-only property n_features_in_
+            object.__setattr__(pca_func._scaler, "n_features_in_", len(pca_func._scaler.mean_))
+
+        if "pca" in config:
+            pca_params = config["pca"]
+            pca_func._pca.components_ = np.array(pca_params["components"])
+            pca_func._pca.mean_ = np.array(pca_params["mean"])
+            pca_func._pca.explained_variance_ = np.array(pca_params["explained_variance"])
+            pca_func._pca.explained_variance_ratio_ = np.array(
+                pca_params["explained_variance_ratio"]
+            )
+            # Use object.__setattr__ to set read-only property n_features_in_
+            object.__setattr__(pca_func._pca, "n_features_in_", len(pca_func._pca.mean_))
+
+        return pca_func
+
+
+FUNCTIONS = {
+    "IdentityFunction": IdentityFunction,
+    "FourierFunction": FourierFunction,
+    "PCAFunction": PCAFunction,
+}

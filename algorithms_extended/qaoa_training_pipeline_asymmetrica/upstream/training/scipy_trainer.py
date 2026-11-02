@@ -1,0 +1,221 @@
+#
+#
+# (C) Copyright IBM 2024.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""This module is an interface to SciPy's minimize function."""
+
+from time import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
+from scipy.optimize import minimize
+
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.evaluation import EVALUATORS
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.evaluation.base_evaluator import BaseEvaluator
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.base_trainer import BaseTrainer
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.functions import (
+    FUNCTIONS,
+    BaseAnglesFunction,
+    IdentityFunction,
+)
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.history_mixin import HistoryMixin
+from algorithms_extended.qaoa_training_pipeline_asymmetrica.upstream.training.param_result import ParamResult
+
+
+class ScipyTrainer(BaseTrainer, HistoryMixin):
+    """A trainer that wraps SciPy's minimize function."""
+
+    def __init__(
+        self,
+        evaluator: BaseEvaluator,
+        minimize_args: dict[str, object] | None = None,
+        energy_minimization: bool = False,
+        qaoa_angles_function: BaseAnglesFunction | None = None,
+    ):
+        """Initialize the trainer.
+
+        Args:
+            evaluator: An instance of `BaseEvaluator` which will evaluate the energy
+                of the QAOA circuit.
+            minimize_args: Arguments that will be passed to SciPy's `minimize`.
+            energy_minimization: Allows us to switch between minimizing the energy or maximizing
+                the energy. The default and assumed convention in this repository is to
+                maximize the energy.
+            qaoa_angles_function: A function to convert optimization parameters into QAOA
+                angles. By default, this is the identity function. Ideally, this argument is
+                an instance of `BaseAnglesFunction` but we allow any callable here that maps
+                optimization parameters to QAOA angles.
+        """
+        BaseTrainer.__init__(self, evaluator, qaoa_angles_function)
+        HistoryMixin.__init__(self)
+
+        self._minimize_args: dict[str, object] = {"method": "COBYLA"}
+
+        minimize_args = minimize_args or {}
+        self._minimize_args.update(minimize_args)
+
+        # Sign to control whether we minimize or maximize the energy
+        self._energy_minimization = energy_minimization
+        self._sign = 1 if energy_minimization else -1
+
+    @property
+    def minimization(self) -> bool:
+        """Return True if the energy is minimized."""
+        return self._sign == 1
+
+    # pylint: disable=too-many-positional-arguments
+    def train(
+        self,
+        cost_op: SparsePauliOp | None = None,
+        mixer: QuantumCircuit | None = None,
+        initial_state: QuantumCircuit | None = None,
+        ansatz_circuit: QuantumCircuit | None = None,
+        params0: list[float] | None = None,
+    ) -> ParamResult:
+        r"""Call SciPy's minimize function to do the optimization.
+
+        Args:
+            cost_op: The cost operator :math:`H_C` of the problem we want to solve.
+            params0: The initial point passed to the `minimize` function.
+            mixer: A quantum circuit representing the mixer of QAOA. This allows us to
+                accommodate, e.g., warm-start QAOA. If this is None, then we assume the
+                standard QAOA mixer.
+            initial_state: A quantum circuit the represents the initial state. If None is
+                given then we default to the equal superposition state |+>.
+            ansatz_circuit: The ansatz circuit in case it differs from the standard QAOA
+                circuit given by :math:`\exp(-i\gamma H_C)`.
+        """
+        params0 = self._require(params0, "params0")
+        self.reset_history()
+
+        start = time()
+
+        def _energy(x):
+            """Maximize the energy by minimizing the negative energy."""
+            estart = time()
+
+            qaoa_angles = self._qaoa_angles_function(x)
+
+            if cost_op is None:
+                raise ValueError("cost_op must be set.")
+            energy = self._sign * self.evaluator.evaluate(
+                cost_op=cost_op,
+                params=qaoa_angles,
+                mixer=mixer,
+                ansatz_circuit=ansatz_circuit,
+                initial_state=initial_state,
+            )
+
+            energy = float(energy)
+
+            self._energy_evaluation_time.append(time() - estart)
+            self._energy_history.append(self._sign * energy)
+            self._parameter_history.append(list(float(val) for val in x))
+
+            return energy
+
+        result = minimize(_energy, np.array(params0), **self._minimize_args)
+
+        param_result = ParamResult.from_scipy_result(
+            result, params0, time() - start, self._sign, self
+        )
+
+        assert self._evaluator, "_evaluator must be defined before calling train()"
+        param_result.update(self._evaluator.get_results_from_last_iteration())
+
+        return param_result
+
+    def plot(
+        self,
+        axis: Axes | None = None,
+        fig: Figure | None = None,
+        **plot_args,
+    ):
+        """Plot the energy history.
+
+        Args:
+            axis: The axis object on which to plot. If None is given then we create one.
+            fig: The figure instance. If no axis are given then we create one.
+            plot_args: Key word arguments that are given to axis.plot().
+
+        Returns:
+            An axis instance and figure handle. These are the inputs when given.
+        """
+
+        if axis is None or fig is None:
+            fig, axis = plt.subplots(1, 1)
+
+        plot_style = {"lw": 2, "color": "dodgerblue"}
+        plot_style.update(plot_args)
+
+        axis.plot(self._energy_history, **plot_style)
+
+        axis.set_xlabel("Iteration number")
+        axis.set_ylabel("Energy")
+
+        return fig, axis
+
+    @classmethod
+    def from_config(cls, config: dict) -> "ScipyTrainer":
+        """Create a scipy trainer based on a config."""
+
+        evaluator_cls = EVALUATORS[config["evaluator"]]
+
+        if "qaoa_angles_function" not in config:
+            function = IdentityFunction()
+        else:
+            function_name = config["qaoa_angles_function"]
+            if function_name not in FUNCTIONS:
+                raise ValueError(
+                    f"{function_name} is not a supported function. "
+                    "Please see training/functions.py for supported functions."
+                )
+
+            function_cls = FUNCTIONS[config["qaoa_angles_function"]]
+            function = function_cls.from_config(config["qaoa_angles_function_init"])
+
+        return cls(
+            evaluator_cls.from_config(config["evaluator_init"]),
+            config.get("minimize_args", None),
+            energy_minimization=config.get("energy_minimization", False),
+            qaoa_angles_function=function,
+        )
+
+    def parse_train_kwargs(self, args_str: str | None = None) -> dict:
+        """Parse any train arguments from a string.
+
+        The only argument that can be contained here is params0. It is the values
+        of the betas and gammas that make up the initial point given to Scipy's
+        minimize function. We give this as a string in the format `params0:v1/v2/v3/v4...`.
+        """
+        train_kwargs = dict()
+        for key, val in self.extract_train_kwargs(args_str).items():
+            if key == "params0":
+                train_kwargs[key] = self.extract_list(val, dtype=float)
+            else:
+                raise ValueError("Unknown key in provided train_kwargs.")
+
+        return train_kwargs
+
+    def to_config(self) -> dict:
+        """Creates a serializable dictionary to keep track of how results are created.
+
+        Note: This data structure is not intended for us to recreate the class instance.
+        """
+        config = {
+            "trainer_name": self.__class__.__name__,
+            "evaluator": self._evaluator.__class__.__name__,
+            "evaluator_init": self._evaluator.to_config() if self._evaluator else None,
+        }
+
+        config.update(self._minimize_args)
+
+        return config

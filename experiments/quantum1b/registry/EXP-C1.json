@@ -1,0 +1,17 @@
+{
+  "experiment_id": "EXP-C1",
+  "track": "C",
+  "hypothesis": "On a synthetic realized-volatility-like task (clearly labeled non-financial-evidence), a properly matched classical ESN (same readout dimension as QRC) ties or beats QuantumReservoir -- consistent with Model Lab's D-reservoir literature synthesis and the existing Q10 audit's QRC-10 finding (classical Ridge ties/beats QRC on identical features).",
+  "benchmark_problem": "Synthetic AR(1)/GARCH(1,1)-style volatility proxy series, 5 independent draws (seeds 0-4), matched readout dimension D in [4,8,16] between classical/reservoir/esn.py::ESN and algorithms/qrc/reservoir.py::QuantumReservoir",
+  "classical_comparator": "persistence (naive last-value), ridge/linear-on-raw-features, classical ESN (matched D) -- all three required",
+  "quantum_method": "QuantumReservoir (matched readout dimension D)",
+  "metrics": ["oos_mse", "qlike", "seed_dispersion", "training_runtime_s", "memory_capacity_ipc", "incremental_value_vs_matched_esn"],
+  "seeds": [0, 1, 2, 3, 4],
+  "stopping_rule": "fixed 70/30 expanding-window split, small documented ridge-alpha grid [0.01, 0.1, 1.0, 10.0], same grid for ESN and QRC readouts",
+  "compute_budget": "< 10 minutes",
+  "pass_fail_interpretation": {
+    "ceiling": "RESEARCH_ONLY is the maximum reachable classification from synthetic-task results alone -- real financial-task execution is BLOCKED pending a Model Lab RESEARCH_ONLY authority contract for licensed OHLCV data on SPY/QQQ/TLT/IEF/GLD/USO (D4 ruling: HOLD on unconfirmed-license free-tier sources, research-corpus/model-lab/work/readiness/READINESS_BRIEF.md). This is a structural ceiling, not an outcome of the measurement."
+  },
+  "evidence_level": "B/C",
+  "prohibited_conclusion": "no claim about QRC's value for real AMC volatility forecasting from synthetic-task results alone; financial_edge_claimed must remain False"
+}

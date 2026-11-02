@@ -1,0 +1,35 @@
+{
+  "_comment": "Committed frozen-controls snapshot. verify_frozen_controls() compares a FRESH recomputation from current code against THIS FILE by default -- regenerate only via generate_frozen_controls_snapshot.py, with an explicit commit and review, never automatically.",
+  "frozen_controls": [
+    {
+      "family": "independent",
+      "n_candidates": 4,
+      "seed": 0,
+      "expected_fingerprint": "afd018c888109b68ff935b72936dbfdd8002faf710c15beed7df856102c6bbf2",
+      "expected_n_qubits": 9,
+      "expected_exact_optimum": 2.0,
+      "expected_simulator_expectation_qaoa_best_objective": 2.0,
+      "expected_simulator_cvar_qaoa_best_objective": 2.0
+    },
+    {
+      "family": "correlated",
+      "n_candidates": 4,
+      "seed": 0,
+      "expected_fingerprint": "4765a75503af45aef3a7d13149e2028874ff810a28bee592a351ffdaa528eaeb",
+      "expected_n_qubits": 9,
+      "expected_exact_optimum": 2.0,
+      "expected_simulator_expectation_qaoa_best_objective": 2.0,
+      "expected_simulator_cvar_qaoa_best_objective": 2.0
+    },
+    {
+      "family": "tight_budget",
+      "n_candidates": 4,
+      "seed": 0,
+      "expected_fingerprint": "014b3ac558c14d517f17cc689845ffe8e9135d6c3e1d30de6cf9cda3708dcd9e",
+      "expected_n_qubits": 9,
+      "expected_exact_optimum": 0.5,
+      "expected_simulator_expectation_qaoa_best_objective": 0.5,
+      "expected_simulator_cvar_qaoa_best_objective": 0.5
+    }
+  ]
+}

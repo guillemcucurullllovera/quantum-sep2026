@@ -1,0 +1,19 @@
+{
+  "experiment_id": "EXP-B1",
+  "track": "B",
+  "hypothesis": "CVaR-QAOA (alpha < 1) achieves a smaller median objective gap to the Track-A exact optimum than expectation-QAOA (alpha = 1) at matched circuit depth, consistent with Barkoutsos & Nannicini (2020).",
+  "benchmark_problem": "Ladder n in [4,6,8,10] (revised down from the original [4..14] preregistration draft after discovering the exact slack-bit QUBO encoding needs more qubits than a penalty-only encoding at n>10 -- see QUANTUM1B_PREREGISTRATION.md 'Preregistration deviations'; n in [12,14] remain in EXP-A2/EXP-B3 which do not require full QAOA optimization), families [independent, correlated, tight_budget, degenerate, concentrated, conflicting_constraints], one instance per (family, n), seed 0 for instance generation",
+  "classical_comparator": "EXP-A1's exact/MILP optimum on the identical OptionSelectionInstance (same qubo_encoding.build_qubo call)",
+  "quantum_method": "NumPy statevector-exact QAOA (experiments.quantum1b.cvar_qaoa), both expectation and CVaR-alpha aggregation, COBYLA, maxiter=200",
+  "metrics": ["objective_gap", "feasible_sample_probability", "best_sample_objective", "cvar_objective", "expected_objective", "approximation_ratio", "constraint_violation_rate", "risk_budget_utilization", "solution_diversity", "two_qubit_gate_count", "runtime_s"],
+  "seeds": [0, 1, 2, 3, 4],
+  "stopping_rule": "COBYLA maxiter=200 per run, fixed",
+  "compute_budget": "target < 4 hours wall-clock; if exceeded, reduce to p in [1,2], 3 seeds, n<=8, documented before re-running",
+  "pass_fail_interpretation": {
+    "PROMISING_FOR_FURTHER_TESTING": "CVaR-QAOA (best alpha) achieves median objective gap <= expectation-QAOA's median gap, difference significant at two-sided Wilcoxon signed-rank p<0.05 across (family,n) cells, AND feasible-probability >= 0.5 in the majority of cells",
+    "RESEARCH_ONLY": "directionally consistent but non-significant improvement, or works only on a subset of families",
+    "NO_GO": "no improvement, underperforms expectation-QAOA, or negligible feasible-probability across most cells"
+  },
+  "evidence_level": "B",
+  "prohibited_conclusion": "no claim of quantum advantage regardless of outcome -- compares two QAOA variants against the classical optimum only, never claims to beat classical solver runtime/resource cost"
+}

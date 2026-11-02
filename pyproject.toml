@@ -1,0 +1,87 @@
+[project]
+name = "quantum-sep2026"
+version = "0.1.0"
+description = "Comprehensive quantum-finance algorithms, classical competitors, research experiments and hardware-readiness engineering"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "LICENSES/*"]
+authors = [{name = "Asymmetrica Investments and Francisco (original source)"}]
+maintainers = [{name = "Guillem Cucurull Llovera"}]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Version ranges below are floor-plus-tested-ceiling: the floor is the
+    # original declared minimum, the ceiling is one minor/major step past the
+    # exact version this platform is tested against as of QUANTUM-1A
+    # (2026-09-30), captured in docs/quantum/QUANTUM1A_CLOSEOUT.md's
+    # environment fingerprint. Not over-pinned to an exact version so routine
+    # patch upgrades don't require a pyproject edit.
+    "numpy>=1.26,<3.0",
+    "scikit-learn>=1.9,<2",
+    "scipy>=1.11,<2.0",
+    "pydantic>=2.4,<3.0",
+    "qiskit==2.5.0",
+    "qiskit-ibm-runtime==0.49.0",
+    "qiskit-aer==0.17.2",
+    "qiskit-algorithms>=0.3,<0.5",
+    "mthree>=2.7,<4.0",
+    "matplotlib>=3.8,<4.0",
+    "pandas>=2.1,<4.0",
+    "hmmlearn>=0.3,<0.4",
+    "joblib>=1.3,<2.0",
+    "networkx>=3.0,<4.0",
+    "quimb>=1.7,<2.0",
+    "python-sat==1.9.dev15",
+    "ddt>=1.6,<2.0",
+    "importlib_resources>=7.1,<8",
+    "fastdtw>=0.3,<0.4",
+    "nasdaq-data-link>=1.0,<2.0",
+    "yfinance>=1.7,<2",
+    "pytket>=2.11,<3.0",
+    "pytket-qiskit==0.78.0",
+    "qiskit-experiments>=0.10,<0.20",
+    # qiskit-optimization was archived by IBM on 2026-07-12 (read-only,
+    # unsupported upstream). CORRECTED during QUANTUM-1A adversarial-review
+    # remediation (2026-09-30) — see docs/quantum/QUANTUM1A_REVIEW_REMEDIATION.md,
+    # finding P0-1: the only non-vendored import sites are
+    # algorithms_extended/qaoa_training_pipeline_asymmetrica/upstream/utils/
+    # {data_utils,graph_utils,problem_classes}.py and their tests, but
+    # graph_utils.py IS a real, eager IMPORT-TIME production dependency —
+    # importing applications.portfolio.training_pipeline_backend transitively
+    # imports it (confirmed dynamically: qiskit_optimization lands in
+    # sys.modules). There is no identified CALL-TIME use of its
+    # qiskit_optimization classes from that production path. data_utils.py/
+    # problem_classes.py are genuinely not reached (only via a standalone
+    # CLI script and tests). Pinned tightly (rather than an open ceiling)
+    # because no further releases are expected from an archived project;
+    # migrate to qiskit-addon-opt-mapper once it matures past 0.1.0.
+    "qiskit-optimization>=0.6,<0.8",
+    "qiskit-machine-learning>=0.7,<1.0",
+    "amazon-braket-sdk>=1.90,<2.0",
+    "amazon-braket-default-simulator>=1.30,<2.0",
+    "amazon-braket-schemas>=1.20,<2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=9.0.3,<10", "pytest-cov>=5.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "slow: computationally heavy tests (large kernel matrices, deep sweeps) excluded from the default run; run explicitly with -m slow",
+    "historical_stochastic: preserved historical/research tests whose statistical claim cannot be validated from a single seed (see the test's own xfail reason); kept visible via xfail(strict=False) rather than deleted, so CI does not misreport them as product regressions",
+]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = [
+    "core*", "algorithms*", "algorithms_extended*", "applications*",
+    "hardware*", "classical*", "benchmarks*", "experiments*", "integrations*",
+    "prototypes*", "tools*", "examples*",
+]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.npz", "*.txt", "*.md", "*.yaml"]

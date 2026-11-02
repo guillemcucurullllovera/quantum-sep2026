@@ -1,0 +1,500 @@
+# Extracted first-party notebook code; execution outputs intentionally omitted.
+
+# Notebook cell
+# IPython: !pip install yfinance statsmodels scipy pandas numpy matplotlib seaborn -q
+
+# Notebook cell
+import os
+import json
+import warnings
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import yfinance as yf
+from scipy import stats
+from statsmodels.tsa.stattools import adfuller, coint
+from statsmodels.tsa.ar_model import AutoReg
+from sklearn.linear_model import LinearRegression
+
+warnings.filterwarnings('ignore')
+
+# Set up plotting style
+plt.style.use('seaborn-v0_8-darkgrid')
+sns.set_palette('husl')
+
+print(f"Execution timestamp: {datetime.now.isoformat}")
+
+# Notebook cell
+# 50 most liquid S&P 500 stocks with sector diversity
+# Selected for high liquidity and sector representation
+
+TICKERS = [
+ # Technology (14)
+ 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'GOOG', 'META', 'TSLA',
+ 'AVGO', 'COST', 'CSCO', 'CRM', 'ADBE', 'INTU', 'INTC',
+ 
+ # Financials (10)
+ 'JPM', 'BAC', 'WFC', 'GS', 'MS', 'BLK', 'SCHW', 'AXP', 'PYPL', 'V',
+ 
+ # Healthcare (8)
+ 'JNJ', 'PFE', 'MRK', 'AZN', 'LLY', 'THC', 'ABBV', 'AMGN',
+ 
+ # Industrials & Transports (6)
+ 'BA', 'CAT', 'GE', 'MMM', 'HON', 'LMT',
+ 
+ # Energy & Materials (5)
+ 'XOM', 'CVX', 'COP', 'MPC', 'FCX',
+ 
+ # Consumer Discretionary & Staples (5)
+ 'WMT', 'PG', 'KO', 'MCD', 'NKE',
+ 
+ # Real Estate & Utilities (2)
+ 'SPG', 'DUK'
+]
+
+assert len(TICKERS) == 50, f"Expected 50 tickers, got {len(TICKERS)}"
+
+# Time period: 3 years from today
+END_DATE = datetime(2026, 4, 3)
+START_DATE = END_DATE - timedelta(days=3*365)
+
+print(f"Analyzing {len(TICKERS)} stocks")
+print(f"Date range: {START_DATE.date} to {END_DATE.date}")
+print(f"Expected observations: ~{(END_DATE - START_DATE).days / 252:.1f} years of trading days")
+print(f"\nTicker list:")
+for i in range(0, len(TICKERS), 10):
+ print(f" {', '.join(TICKERS[i:i+10])}")
+
+# Notebook cell
+# Create necessary directories
+notebook_dir = Path.cwd
+project_root = notebook_dir.parent.parent
+data_dir = project_root / 'data'
+results_dir = project_root / 'results'
+
+data_dir.mkdir(parents=True, exist_ok=True)
+results_dir.mkdir(parents=True, exist_ok=True)
+
+print(f"Project root: {project_root}")
+print(f"Data directory: {data_dir}")
+print(f"Results directory: {results_dir}")
+
+# Notebook cell
+def download_price_data(tickers, start_date, end_date, max_retries=3):
+ """
+ Download adjusted close prices for a list of tickers.
+ 
+ Args:
+ tickers: List of ticker symbols
+ start_date: Start date (datetime)
+ end_date: End date (datetime)
+ max_retries: Maximum retry attempts per ticker
+ 
+ Returns:
+ DataFrame of adjusted close prices (indexed by date, columns are tickers)
+ """
+ print(f"Downloading price data for {len(tickers)} tickers...")
+ 
+ prices = pd.DataFrame
+ failed_tickers = []
+ 
+ for ticker in tickers:
+ try:
+ data = yf.download(
+ ticker,
+ start=start_date,
+ end=end_date,
+ progress=False
+ )
+ prices[ticker] = data['Adj Close']
+ print(f" ✓ {ticker}: {len(data)} observations")
+ except Exception as e:
+ print(f" ✗ {ticker}: {str(e)[:50]}")
+ failed_tickers.append(ticker)
+ 
+ if failed_tickers:
+ print(f"\nWarning: Failed to download {len(failed_tickers)} tickers: {failed_tickers}")
+ print("These will be excluded from analysis.")
+ 
+ # Forward fill missing values, then drop rows with any NaNs
+ prices = prices.fillna(method='ffill')
+ prices = prices.dropna
+ 
+ print(f"\nFinal dataset shape: {prices.shape}")
+ print(f"Date range: {prices.index[0].date} to {prices.index[-1].date}")
+ print(f"Missing values: {prices.isna.sum.sum}")
+ 
+ return prices
+
+# Download data
+prices_df = download_price_data(TICKERS, START_DATE, END_DATE)
+
+# Notebook cell
+# Save raw price data
+prices_path = data_dir / 'sp500_prices.csv'
+prices_df.to_csv(prices_path)
+print(f"Price data saved to: {prices_path}")
+print(f"File size: {prices_path.stat.st_size / 1024:.1f} KB")
+
+# Notebook cell
+# Calculate daily returns
+returns_df = prices_df.pct_change.dropna
+
+print("Returns Summary Statistics")
+print("=" * 80)
+print(returns_df.describe.T)
+
+print("\n\nReturn Correlations Summary")
+print("=" * 80)
+corr_matrix = returns_df.corr
+print(f"Mean correlation: {corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)].mean:.4f}")
+print(f"Median correlation: {np.median(corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)]):.4f}")
+print(f"Min correlation: {corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)].min:.4f}")
+print(f"Max correlation: {corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)].max:.4f}")
+
+# Notebook cell
+# Create correlation heatmap
+fig, ax = plt.subplots(figsize=(16, 14))
+sns.heatmap(
+ corr_matrix,
+ cmap='RdBu_r',
+ center=0,
+ vmin=-1,
+ vmax=1,
+ square=True,
+ xticklabels=True,
+ yticklabels=True,
+ cbar_kws={'label': 'Correlation Coefficient'},
+ ax=ax
+)
+ax.set_title('Return Correlation Matrix: 50 Most Liquid S&P 500 Stocks', fontsize=14, fontweight='bold')
+plt.xticks(rotation=45, ha='right', fontsize=8)
+plt.yticks(rotation=0, fontsize=8)
+plt.tight_layout
+plt.savefig(results_dir / 'correlation_heatmap.png', dpi=150, bbox_inches='tight')
+plt.show
+
+print("Correlation heatmap saved.")
+
+# Notebook cell
+def test_cointegration_pair(y, x):
+ """
+ Test cointegration between two price series and compute hedge ratio and half-life.
+ 
+ Args:
+ y: Dependent variable (price series)
+ x: Independent variable (price series)
+ 
+ Returns:
+ dict with coint_pvalue, hedge_ratio, spread_sharpe, half_life
+ """
+ try:
+ # Cointegration test (Engle-Granger)
+ score, pvalue, _ = coint(y, x)
+ 
+ # Hedge ratio (OLS regression)
+ model = LinearRegression
+ model.fit(x.values.reshape(-1, 1), y.values)
+ hedge_ratio = model.coef_[0]
+ 
+ # Spread: y - beta * x
+ spread = y - hedge_ratio * x
+ 
+ # Spread Sharpe ratio (annualized)
+ spread_returns = spread.pct_change.dropna
+ spread_mean = spread_returns.mean * 252
+ spread_std = spread_returns.std * np.sqrt(252)
+ spread_sharpe = spread_mean / spread_std if spread_std > 0 else 0
+ 
+ # Half-life of mean reversion (AR(1) model on spread)
+ spread_normalized = (spread - spread.mean) / spread.std
+ if len(spread_normalized) > 10:
+ try:
+ ar_model = AutoReg(spread_normalized, lags=1)
+ ar_fit = ar_model.fit
+ rho = ar_fit.params[1] # AR(1) coefficient
+ if 0 < rho < 1:
+ half_life = -np.log(2) / np.log(rho)
+ else:
+ half_life = np.nan
+ except:
+ half_life = np.nan
+ else:
+ half_life = np.nan
+ 
+ return {
+ 'coint_pvalue': pvalue,
+ 'hedge_ratio': hedge_ratio,
+ 'spread_sharpe': spread_sharpe,
+ 'half_life': half_life
+ }
+ except Exception as e:
+ return {
+ 'coint_pvalue': np.nan,
+ 'hedge_ratio': np.nan,
+ 'spread_sharpe': np.nan,
+ 'half_life': np.nan
+ }
+
+# Run exhaustive cointegration tests
+print(f"Testing cointegration on all pairs...")
+print(f"Total pairs to test: {len(prices_df.columns) * (len(prices_df.columns) - 1) // 2}")
+
+results = []
+ticker_list = prices_df.columns.tolist
+
+for i, ticker_y in enumerate(ticker_list):
+ for ticker_x in ticker_list[i+1:]:
+ test_result = test_cointegration_pair(prices_df[ticker_y], prices_df[ticker_x])
+ results.append({
+ 'ticker_y': ticker_y,
+ 'ticker_x': ticker_x,
+ 'coint_pvalue': test_result['coint_pvalue'],
+ 'hedge_ratio': test_result['hedge_ratio'],
+ 'spread_sharpe': test_result['spread_sharpe'],
+ 'half_life': test_result['half_life']
+ })
+ 
+ if (i + 1) % 10 == 0:
+ print(f" Processed {i + 1}/{len(ticker_list)} tickers...")
+
+cointegration_df = pd.DataFrame(results)
+print(f"\nCompleted {len(cointegration_df)} pairwise tests.")
+print(f"\nCointegration p-value summary:")
+print(cointegration_df['coint_pvalue'].describe)
+
+# Notebook cell
+# Define filtering criteria
+PVALUE_THRESHOLD = 0.05
+HALF_LIFE_MIN = 5
+HALF_LIFE_MAX = 120
+SPREAD_SHARPE_MIN = 0.5
+
+print("Filtering Criteria:")
+print(f" - Cointegration p-value < {PVALUE_THRESHOLD}")
+print(f" - Half-life between {HALF_LIFE_MIN} and {HALF_LIFE_MAX} days")
+print(f" - Spread Sharpe ratio > {SPREAD_SHARPE_MIN}")
+print
+
+# Apply filters
+filtered_df = cointegration_df[
+ (cointegration_df['coint_pvalue'] < PVALUE_THRESHOLD) &
+ (cointegration_df['half_life'] >= HALF_LIFE_MIN) &
+ (cointegration_df['half_life'] <= HALF_LIFE_MAX) &
+ (cointegration_df['spread_sharpe'] > SPREAD_SHARPE_MIN)
+].copy
+
+# Sort by spread Sharpe ratio (descending)
+filtered_df = filtered_df.sort_values('spread_sharpe', ascending=False).reset_index(drop=True)
+
+print(f"Pairs passing all filters: {len(filtered_df)}")
+print(f"\nTop 50 cointegrated pairs by Spread Sharpe ratio:")
+print("=" * 100)
+display_df = filtered_df.head(50).copy
+display_df['coint_pvalue'] = display_df['coint_pvalue'].apply(lambda x: f"{x:.4f}")
+display_df['hedge_ratio'] = display_df['hedge_ratio'].apply(lambda x: f"{x:.4f}")
+display_df['spread_sharpe'] = display_df['spread_sharpe'].apply(lambda x: f"{x:.4f}")
+display_df['half_life'] = display_df['half_life'].apply(lambda x: f"{x:.2f}")
+print(display_df.to_string(index=True))
+
+# Notebook cell
+# Plot spread time series for top 5 pairs
+if len(filtered_df) > 0:
+ top_5_pairs = filtered_df.head(5)
+ fig, axes = plt.subplots(5, 1, figsize=(14, 12))
+ 
+ for idx, (plot_idx, row) in enumerate(top_5_pairs.iterrows):
+ ticker_y = row['ticker_y']
+ ticker_x = row['ticker_x']
+ hedge_ratio = row['hedge_ratio']
+ 
+ # Calculate spread
+ spread = prices_df[ticker_y] - hedge_ratio * prices_df[ticker_x]
+ spread_normalized = (spread - spread.mean) / spread.std
+ 
+ # Calculate z-score bands
+ window = 60
+ rolling_mean = spread_normalized.rolling(window=window).mean
+ rolling_std = spread_normalized.rolling(window=window).std
+ 
+ ax = axes[idx]
+ ax.plot(spread_normalized.index, spread_normalized.values, label='Spread (normalized)', linewidth=1.5)
+ ax.plot(rolling_mean.index, rolling_mean.values, label='60-day MA', linewidth=2, linestyle='--', alpha=0.7)
+ ax.fill_between(
+ rolling_mean.index,
+ rolling_mean - 2 * rolling_std,
+ rolling_mean + 2 * rolling_std,
+ alpha=0.2,
+ label='±2 Std Dev Bands'
+ )
+ ax.axhline(y=0, color='k', linestyle='-', linewidth=0.5, alpha=0.3)
+ ax.set_title(
+ f"Pair #{plot_idx + 1}: {ticker_y} vs {ticker_x} | "
+ f"Sharpe={row['spread_sharpe']:.3f} | "
+ f"Half-life={row['half_life']:.1f}d | "
+ f"p-value={row['coint_pvalue']:.4f}",
+ fontweight='bold'
+ )
+ ax.set_ylabel('Z-score')
+ ax.legend(loc='upper right', fontsize=8)
+ ax.grid(True, alpha=0.3)
+ 
+ axes[-1].set_xlabel('Date')
+ fig.suptitle('Top 5 Cointegrated Pairs: Spread Analysis with Z-score Bands', fontsize=14, fontweight='bold', y=0.995)
+ plt.tight_layout
+ plt.savefig(results_dir / 'top_5_spreads.png', dpi=150, bbox_inches='tight')
+ plt.show
+ print("Top 5 spreads plot saved.")
+else:
+ print("No pairs passed filtering criteria.")
+
+# Notebook cell
+if len(filtered_df) > 0:
+ fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+ 
+ # Half-life distribution
+ axes[0].hist(filtered_df['half_life'].dropna, bins=30, edgecolor='black', alpha=0.7, color='steelblue')
+ axes[0].axvline(filtered_df['half_life'].mean, color='red', linestyle='--', linewidth=2, label=f"Mean: {filtered_df['half_life'].mean:.1f}d")
+ axes[0].axvline(filtered_df['half_life'].median, color='green', linestyle='--', linewidth=2, label=f"Median: {filtered_df['half_life'].median:.1f}d")
+ axes[0].set_xlabel('Half-life (days)')
+ axes[0].set_ylabel('Frequency')
+ axes[0].set_title('Distribution of Mean Reversion Half-lives')
+ axes[0].legend
+ axes[0].grid(True, alpha=0.3)
+ 
+ # Spread Sharpe distribution
+ axes[1].hist(filtered_df['spread_sharpe'], bins=30, edgecolor='black', alpha=0.7, color='coral')
+ axes[1].axvline(filtered_df['spread_sharpe'].mean, color='red', linestyle='--', linewidth=2, label=f"Mean: {filtered_df['spread_sharpe'].mean:.3f}")
+ axes[1].axvline(filtered_df['spread_sharpe'].median, color='green', linestyle='--', linewidth=2, label=f"Median: {filtered_df['spread_sharpe'].median:.3f}")
+ axes[1].set_xlabel('Spread Sharpe Ratio')
+ axes[1].set_ylabel('Frequency')
+ axes[1].set_title('Distribution of Spread Sharpe Ratios')
+ axes[1].legend
+ axes[1].grid(True, alpha=0.3)
+ 
+ fig.suptitle('Statistical Distributions of Filtered Pairs', fontsize=14, fontweight='bold')
+ plt.tight_layout
+ plt.savefig(results_dir / 'distributions.png', dpi=150, bbox_inches='tight')
+ plt.show
+ print("Distribution plots saved.")
+else:
+ print("No pairs to visualize.")
+
+# Notebook cell
+# Export filtered pairs to CSV
+pairs_csv_path = data_dir / 'cointegrated_pairs.csv'
+filtered_df.to_csv(pairs_csv_path, index=False)
+print(f"Cointegrated pairs saved to: {pairs_csv_path}")
+print(f" - Total pairs: {len(filtered_df)}")
+print(f" - File size: {pairs_csv_path.stat.st_size / 1024:.1f} KB")
+
+# Notebook cell
+# Generate comprehensive summary report
+summary_report = {
+ 'execution_date': datetime.now.isoformat,
+ 'data_period': {
+ 'start': START_DATE.isoformat,
+ 'end': END_DATE.isoformat,
+ 'trading_days': len(prices_df)
+ },
+ 'sample_universe': {
+ 'total_stocks': len(TICKERS),
+ 'stocks_analyzed': len(prices_df.columns),
+ 'tickers': ticker_list
+ },
+ 'data_quality': {
+ 'missing_values': int(prices_df.isna.sum.sum),
+ 'total_observations': len(prices_df) * len(prices_df.columns)
+ },
+ 'returns_analysis': {
+ 'mean_return': float(returns_df.mean.mean),
+ 'median_return': float(returns_df.median.median),
+ 'mean_volatility': float(returns_df.std.mean),
+ 'mean_correlation': float(corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)].mean)
+ },
+ 'cointegration_analysis': {
+ 'total_pairs_tested': len(cointegration_df),
+ 'pairs_significant_at_5pct': int((cointegration_df['coint_pvalue'] < 0.05).sum),
+ 'pairs_passing_all_filters': len(filtered_df),
+ 'filter_criteria': {
+ 'pvalue_threshold': PVALUE_THRESHOLD,
+ 'half_life_min': HALF_LIFE_MIN,
+ 'half_life_max': HALF_LIFE_MAX,
+ 'spread_sharpe_min': SPREAD_SHARPE_MIN
+ }
+ },
+ 'filtered_pairs_metrics': {
+ 'mean_spread_sharpe': float(filtered_df['spread_sharpe'].mean) if len(filtered_df) > 0 else None,
+ 'median_spread_sharpe': float(filtered_df['spread_sharpe'].median) if len(filtered_df) > 0 else None,
+ 'mean_half_life': float(filtered_df['half_life'].mean) if len(filtered_df) > 0 else None,
+ 'median_half_life': float(filtered_df['half_life'].median) if len(filtered_df) > 0 else None,
+ 'mean_pvalue': float(filtered_df['coint_pvalue'].mean) if len(filtered_df) > 0 else None
+ },
+ 'output_files': {
+ 'price_data': str(prices_path),
+ 'cointegrated_pairs': str(pairs_csv_path),
+ 'correlation_heatmap': str(results_dir / 'correlation_heatmap.png'),
+ 'top_5_spreads': str(results_dir / 'top_5_spreads.png'),
+ 'distributions': str(results_dir / 'distributions.png')
+ }
+}
+
+# Save summary as JSON
+summary_json_path = results_dir / 'cointegration_summary.json'
+with open(summary_json_path, 'w') as f:
+ json.dump(summary_report, f, indent=2)
+
+print("\n" + "="*100)
+print("EXECUTION SUMMARY")
+print("="*100)
+print(json.dumps(summary_report, indent=2))
+print("\n" + "="*100)
+print(f"Summary report saved to: {summary_json_path}")
+print("="*100)
+
+# Notebook cell
+# Validate all outputs exist and are valid
+print("Validating outputs...\n")
+
+validation_status = {
+ 'Price data CSV': prices_path.exists,
+ 'Cointegrated pairs CSV': pairs_csv_path.exists,
+ 'Summary JSON': summary_json_path.exists,
+ 'Correlation heatmap PNG': (results_dir / 'correlation_heatmap.png').exists,
+ 'Top 5 spreads PNG': (results_dir / 'top_5_spreads.png').exists,
+ 'Distributions PNG': (results_dir / 'distributions.png').exists
+}
+
+for output_name, exists in validation_status.items:
+ status_symbol = '✓' if exists else '✗'
+ print(f" {status_symbol} {output_name}")
+
+all_valid = all(validation_status.values)
+print(f"\nAll outputs valid: {all_valid}")
+
+if all_valid:
+ print("\n" + "="*100)
+ print("DATA PREPARATION PIPELINE COMPLETED SUCCESSFULLY")
+ print("="*100)
+ print(f"\nNext steps:")
+ print(f" 1. Review cointegrated pairs in: {pairs_csv_path}")
+ print(f" 2. Examine summary metrics in: {summary_json_path}")
+ print(f" 3. Proceed to signal generation and backtesting")
+else:
+ print("\nWarning: Some outputs are missing. Please check the execution logs.")
+
+# Notebook cell
+
+
+# Notebook cell
+
+
+# Notebook cell
+
+
+# Notebook cell
+

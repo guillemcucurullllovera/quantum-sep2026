@@ -1,0 +1,106 @@
+# This code is part of a Qiskit project.
+#
+# (C) Copyright IBM 2021, 2025.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""Test from_gurobipy and to_gurobipy"""
+
+import unittest
+from os import path
+from tempfile import TemporaryDirectory
+from tests.algorithms_extended.qiskit_optimization_asymmetrica_upstream.optimization_test_case import QiskitOptimizationTestCase
+
+import algorithms_extended.qiskit_optimization_asymmetrica.optionals as _optionals
+from algorithms_extended.qiskit_optimization_asymmetrica.exceptions import QiskitOptimizationError
+from algorithms_extended.qiskit_optimization_asymmetrica.problems import Constraint, QuadraticProgram
+from algorithms_extended.qiskit_optimization_asymmetrica.translators.gurobipy import from_gurobipy, to_gurobipy
+
+
+class TestGurobiTranslator(QiskitOptimizationTestCase):
+    """Test from_gurobipy and to_gurobipy"""
+
+    @unittest.skipIf(not _optionals.HAS_GUROBIPY, "Gurobi not available.")
+    def test_from_and_to(self):
+        """test from_gurobipy and to_gurobipy"""
+        q_p = QuadraticProgram("test")
+        q_p.binary_var(name="x")
+        q_p.integer_var(name="y", lowerbound=-2, upperbound=4)
+        q_p.continuous_var(name="z", lowerbound=-1.5, upperbound=3.2)
+        q_p.minimize(constant=1, linear={"x": 1, "y": 2}, quadratic={("x", "y"): -1, ("z", "z"): 2})
+        q_p.linear_constraint({"x": 2, "z": -1}, "==", 1)
+        q_p.quadratic_constraint({"x": 2, "z": -1}, {("y", "z"): 3}, "==", 1)
+        q_p2 = from_gurobipy(to_gurobipy(q_p))
+        self.assertEqual(q_p.prettyprint(), q_p2.prettyprint())
+
+        # pylint: disable=import-error
+        import gurobipy as gp
+
+        mod = gp.Model("test")
+        x = mod.addVar(vtype=gp.GRB.BINARY, name="x")
+        y = mod.addVar(vtype=gp.GRB.INTEGER, lb=-2, ub=4, name="y")
+        z = mod.addVar(vtype=gp.GRB.CONTINUOUS, lb=-1.5, ub=3.2, name="z")
+        mod.setObjective(1 + x + 2 * y - x * y + 2 * z * z)
+        mod.addConstr(2 * x - z == 1, name="c0")
+        mod.addConstr(2 * x - z + 3 * y * z == 1, name="q0")
+
+        q_mod = to_gurobipy(q_p)
+        with TemporaryDirectory() as tmpdir:
+            file_name = path.join(tmpdir, "mod.lp")
+            q_mod.write(file_name)
+            with open(file_name, encoding="utf-8") as file:
+                q_mod_str = file.read()
+
+            file_name = path.join(tmpdir, "mod2.lp")
+            mod.write(file_name)
+            with open(file_name, encoding="utf-8") as file:
+                mod_str = file.read()
+        self.assertEqual(q_mod_str, mod_str)
+
+        with self.assertRaises(QiskitOptimizationError):
+            mod = gp.Model()
+            mod.addVar(vtype=gp.GRB.SEMIINT, lb=1, name="x")
+            _ = from_gurobipy(mod)
+
+        with self.assertRaises(QiskitOptimizationError):
+            mod = gp.Model()
+            x = mod.addVar(vtype=gp.GRB.BINARY, name="x")
+            y = mod.addVar(vtype=gp.GRB.BINARY, name="y")
+            mod.addConstr((x == 1) >> (x + y <= 1))
+            _ = from_gurobipy(mod)
+
+        # test from_gurobipy without explicit variable names
+        mod = gp.Model()
+        x = mod.addVar(vtype=gp.GRB.BINARY)
+        y = mod.addVar(vtype=gp.GRB.CONTINUOUS)
+        z = mod.addVar(vtype=gp.GRB.INTEGER)
+        mod.setObjective(x + y + z + x * y + y * z + x * z)
+        mod.addConstr(x + y == z)  # linear EQ
+        mod.addConstr(x + y >= z)  # linear GE
+        mod.addConstr(x + y <= z)  # linear LE
+        mod.addConstr(x * y == z)  # quadratic EQ
+        mod.addConstr(x * y >= z)  # quadratic GE
+        mod.addConstr(x * y <= z)  # quadratic LE
+        q_p = from_gurobipy(mod)
+        var_names = [v.name for v in q_p.variables]
+        self.assertListEqual(var_names, ["C0", "C1", "C2"])
+        senses = [Constraint.Sense.EQ, Constraint.Sense.GE, Constraint.Sense.LE]
+        for i, c in enumerate(q_p.linear_constraints):
+            self.assertDictEqual(c.linear.to_dict(use_name=True), {"C0": 1, "C1": 1, "C2": -1})
+            self.assertEqual(c.rhs, 0)
+            self.assertEqual(c.sense, senses[i])
+        for i, c in enumerate(q_p.quadratic_constraints):
+            self.assertEqual(c.rhs, 0)
+            self.assertDictEqual(c.linear.to_dict(use_name=True), {"C2": -1})
+            self.assertDictEqual(c.quadratic.to_dict(use_name=True), {("C0", "C1"): 1})
+            self.assertEqual(c.sense, senses[i])
+
+
+if __name__ == "__main__":
+    unittest.main()

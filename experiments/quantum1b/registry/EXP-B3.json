@@ -1,0 +1,17 @@
+{
+  "experiment_id": "EXP-B3",
+  "track": "B",
+  "hypothesis": "Consistent with the existing Q10 audit's three-for-three CSIM finding (PQK-v2, QRC-10, VQC-v5; docs/research/Q10_AUDIT__classical-simulability.md), CVaR-QAOA as simulated in 1B is CSIM by provenance at every n tested (NumPy statevector execution by construction), and the crossover n at which exact classical simulation becomes infeasible is far beyond any n reachable by this phase's compute budget.",
+  "benchmark_problem": "EXP-B1's instance ladder, extended for the entanglement/memory diagnostic up to n<=24 (structural diagnostic only, no fresh optimization needed above n=10 -- reuses EXP-B1's optimized (gamma,beta) where n overlaps, uses representative/random angles for the extended-n memory curve)",
+  "classical_comparator": "n/a -- structural/provenance classification, not a solve comparison",
+  "quantum_method": "Statevector memory (2^n x 16 bytes) and Schmidt-rank/bipartite entanglement entropy across the middle bipartition, vs n and p",
+  "metrics": ["statevector_memory_bytes", "bipartite_entanglement_entropy", "schmidt_rank"],
+  "seeds": [0],
+  "stopping_rule": "n up to the largest value where statevector construction stays under 4 GiB (n<=27); report theoretical crossover point even if not reached empirically",
+  "compute_budget": "< 20 minutes",
+  "pass_fail_interpretation": {
+    "classification_only": "not pass/fail -- prohibited conclusion is the gate (see below)"
+  },
+  "evidence_level": "A+B",
+  "prohibited_conclusion": "claiming any n tested in 1B constitutes evidence of quantum advantage -- CSIM at every such n forecloses that by construction, per the same logic already accepted for QRC-10/VQC-v5 in the existing Q10 audit"
+}
