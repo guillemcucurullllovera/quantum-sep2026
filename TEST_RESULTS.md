@@ -37,7 +37,9 @@ historical market result or practical quantum advantage.
 - CI is configured to run the offline suite, wheel build/install/smokes and a
   checksum-verified complete Git-history secret scan. CI runs without provider
   credentials; the hardware integration code is included in the source release.
-  Test evidence is scoped to the specific procedures recorded above.
+  Local/CI evidence uses simulators, synthetic inputs, fake backends or mocks; no
+  real QPU execution is reported or validated. Test evidence is scoped to the
+  specific procedures recorded above.
 
 Excluded tests require private datasets, credentials, provider accounts,
 network access or historically frozen empirical result archives. Exclusions
