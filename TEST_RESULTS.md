@@ -13,14 +13,22 @@ historical market result or real-hardware advantage.
 - Seeded synthetic release smoke: **PASS** for QAE barrier-grid oracle, QAOA
   norm/cardinality, fidelity-kernel PSD, QRC finite readout, VQC v1/v4/v5
   normalization and three MILP/enumeration cross-checks.
-- Isolated installed-wheel evidence: **103 passed, 0 failed/skipped** in the
-  previously recorded wheel suite; the tested runtime Python sources were
-  byte-identical to the staged source suite. The suite exercises source
-  families rather than claiming full historical replication.
-- Additional scalar-likelihood oracle tests: **12 passed** in the recorded
-  wheel evidence; they compare every vectorized MLAE grid likelihood/minimum
-  against the original scalar implementation.
+- Current isolated installed-wheel suite: **103 passed, 0 failed/skipped**;
+  package imports were confirmed from the isolated environment's `site-packages`,
+  dependency check passed and the seeded synthetic smoke passed against the wheel.
+  The suite exercises source families rather than claiming full historical
+  replication.
+- Additional scalar-likelihood oracle tests: **12 passed** in the wheel suite;
+  they compare every vectorized MLAE grid likelihood/minimum against the original
+  scalar implementation.
 - Current staged-source scalar-likelihood oracle tests: **12 passed**.
+- First GitHub broad-suite attempt: **1,928 passed, 86 failed, 37 skipped, 8
+  deselected, 1 xfailed**. The failures were classified: 80 assertions required
+  source-era result/report inputs deliberately excluded from this release, five
+  tested for retaining prohibited retired investor artifacts, and one noisy
+  Ramsey fit was nondeterministic under an implicit simulator seed. The test
+  scope and deterministic fix are now in the release; affected focused tests
+  pass (**112 passed, 80 explicit skips**). Full CI rerun remains pending.
 - Checkpointed broad source suite: **in progress**. Completed individual cases
   are recorded durably in the planning workspace at
   `data/derived/release_checks/quantum-parent-test-checkpoints.jsonl`; only

@@ -6183,9 +6183,11 @@
       "source_path": "algorithms_extended/qiskit_experiments_asymmetrica/integration.py",
       "destination_path": "algorithms_extended/qiskit_experiments_asymmetrica/integration.py",
       "source_sha256": "2dbad851876fe465567805bf7a2b37d26c63080eec33e308ac0d4a962466bfe3",
-      "destination_sha256": "2dbad851876fe465567805bf7a2b37d26c63080eec33e308ac0d4a962466bfe3",
+      "destination_sha256": "130316d97ef25f269a61579c9317d3ceb9b433d86c5b337ef0dc1376d5b70aac",
       "provenance_class": "THIRD_PARTY_OR_MIXED_PERMISSIVE",
-      "changes": []
+      "changes": [
+        "Reviewed release integration/configuration edit; see RELEASE_CHANGES.md"
+      ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",
@@ -18795,9 +18797,11 @@
       "source_path": "tests/hygiene/test_retired_artifacts.py",
       "destination_path": "tests/hygiene/test_retired_artifacts.py",
       "source_sha256": "99dc9e055de0d2392e1e77e0e5ff3b09a8e13d1507a1ad721ecbc36b49df12ff",
-      "destination_sha256": "99dc9e055de0d2392e1e77e0e5ff3b09a8e13d1507a1ad721ecbc36b49df12ff",
+      "destination_sha256": "82b80795270d188c15f1cac64f2e905a04e2037e49d0b0519abef1cfc3eebc59",
       "provenance_class": "FIRST_PARTY",
-      "changes": []
+      "changes": [
+        "Reviewed release integration/configuration edit; see RELEASE_CHANGES.md"
+      ]
     },
     {
       "source_branch": "quantum/quantum1b-research-20260930",

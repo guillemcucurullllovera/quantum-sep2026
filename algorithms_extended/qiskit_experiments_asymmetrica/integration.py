@@ -47,7 +47,7 @@ def run_t1_experiment(fake_backend, physical_qubit: int = 0, registry: Experimen
     # decay is actually visible in the sampled range
     delays = np.linspace(1e-6, max(3 * declared_t1_s, 3e-6), 30)
     exp = T1(physical_qubits=(physical_qubit,), delays=delays, backend=sim)
-    exp_data = exp.run().block_for_results()
+    exp_data = exp.run(seed_simulator=42).block_for_results()
     df = exp_data.analysis_results(dataframe=True)
     t1_row = df[df["name"] == "T1"].iloc[0]
     measured_t1_s = float(t1_row["value"].nominal_value)
@@ -100,7 +100,9 @@ def run_t2_experiment(fake_backend, physical_qubit: int = 0, registry: Experimen
     declared_t2_s = fake_backend.target.qubit_properties[physical_qubit].t2
     delays = np.linspace(1e-6, max(2 * declared_t2_s, 2e-6), 40)
     exp = T2Ramsey(physical_qubits=(physical_qubit,), delays=delays, backend=sim, osc_freq=2e5)
-    exp_data = exp.run().block_for_results()
+    # A fixed simulator seed avoids rare underdetermined Ramsey fits from
+    # shot noise while leaving the experiment, fit and measured output intact.
+    exp_data = exp.run(seed_simulator=42).block_for_results()
     df = exp_data.analysis_results(dataframe=True)
     t2_row = df[df["name"] == "T2star"].iloc[0]
     measured_t2_s = float(t2_row["value"].nominal_value)

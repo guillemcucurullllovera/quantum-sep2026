@@ -1,23 +1,14 @@
-"""QUANTUM-1A Phase 0: retirement/quarantine guards for withdrawn
-advantage-claim artifacts (see benchmarks/algorithms/qrc/_RETIRED_ADVANTAGE_CLAIMS/RETIRED.md).
-
-These tests fail the suite if a retired artifact is deleted (evidence
-must be preserved, not erased), if its reuse guard is removed, or if any
-live source path starts importing/referencing it again.
-"""
-import hashlib
+"""Public-release guards for withdrawn, non-redistributable QRC claims."""
+import json
 import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RETIRED_DIR = REPO_ROOT / "benchmarks/algorithms/qrc/_RETIRED_ADVANTAGE_CLAIMS"
-
-# The original notebook's sha256 at base commit 799198c1f1695619a9cdbe4c998b5fe7b7dcf8d0
-# ("Initial quantum platform release") — see RETIRED.md's "Immutability record".
-# The retired notebook's bytes must never drift from this: no banner, no
-# metadata, nothing inserted into the historical artifact itself.
-ORIGINAL_NOTEBOOK_SHA256 = (
-    "3fce18b37df70882216257812c593b761cdcb2b0933bd1caf360bf6a8dd562fb"
+RETIRED_SOURCE_PATHS = (
+    "benchmarks/algorithms/qrc/_RETIRED_ADVANTAGE_CLAIMS/qrc_investor_demo.ipynb",
+    "benchmarks/algorithms/qrc/_RETIRED_ADVANTAGE_CLAIMS/make_slides.py",
+    "benchmarks/algorithms/qrc/_RETIRED_ADVANTAGE_CLAIMS/RETIRED.md",
 )
 
 # Source roots that must never IMPORT/reference a retired artifact from
@@ -43,47 +34,15 @@ LIVE_BENCHMARKS_EXCLUDING_RETIRED = [
 RETIRED_FILENAMES = ("make_slides.py", "qrc_investor_demo.ipynb")
 
 
-def test_retired_directory_and_marker_exist():
-    assert RETIRED_DIR.is_dir(), "retirement quarantine directory must exist"
-    marker = RETIRED_DIR / "RETIRED.md"
-    assert marker.is_file()
-    text = marker.read_text()
-    for required in ("RETIRED", "INVALIDATED", "NOT FOR EXTERNAL USE", "Q10"):
-        assert required in text
-
-
-def test_retired_artifacts_preserved_not_deleted():
-    notebook = RETIRED_DIR / "qrc_investor_demo.ipynb"
-    slides = RETIRED_DIR / "make_slides.py"
-    assert notebook.is_file(), "historical evidence must be preserved, not deleted"
-    assert slides.is_file(), "historical evidence must be preserved, not deleted"
-
-
-def test_retired_notebook_is_byte_identical_to_original():
-    """The historical artifact's bytes must never change — no banner, no
-    metadata, nothing inserted. Retirement state lives in RETIRED.md and
-    the runtime guard below, never in the artifact itself. See RETIRED.md's
-    "Immutability record" and docs/quantum/QUANTUM1A_REVIEW_REMEDIATION.md,
-    finding P1-2."""
-    notebook = RETIRED_DIR / "qrc_investor_demo.ipynb"
-    digest = hashlib.sha256(notebook.read_bytes()).hexdigest()
-    assert digest == ORIGINAL_NOTEBOOK_SHA256, (
-        f"qrc_investor_demo.ipynb has drifted from its recorded original "
-        f"hash ({digest} != {ORIGINAL_NOTEBOOK_SHA256}) — the historical "
-        "artifact must remain byte-identical; retirement state belongs in "
-        "RETIRED.md, not in the notebook's own bytes."
-    )
-
-
-def test_retired_md_documents_the_immutability_hash():
-    text = (RETIRED_DIR / "RETIRED.md").read_text()
-    assert ORIGINAL_NOTEBOOK_SHA256 in text
-
-
-def test_make_slides_raises_on_execution():
-    text = (RETIRED_DIR / "make_slides.py").read_text()
-    assert "raise RuntimeError" in text
-    assert "RETIRED" in text.split("raise RuntimeError")[1][:400]
+def test_retired_claim_artifacts_are_excluded_with_provenance():
+    """Do not republish withdrawn investor claims to keep a source-era test green."""
+    report = json.loads((REPO_ROOT / "SOURCE_COVERAGE.json").read_text())
+    entries = {row["path"]: row for row in report["source_inventory"]}
+    for source_path in RETIRED_SOURCE_PATHS:
+        assert source_path in entries
+        assert entries[source_path]["disposition"] == "EXCLUDED"
+        assert "retired" in entries[source_path]["reason"].lower() or "historical" in entries[source_path]["reason"].lower()
+        assert entries[source_path]["destination"] is None
 
 
 def test_no_live_source_imports_retired_artifacts():
