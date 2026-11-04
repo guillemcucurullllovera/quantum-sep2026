@@ -1,8 +1,8 @@
 # Release validation status
 
-Validation is deliberately divided between local deterministic checks, the
-isolated-wheel evidence, and the complete CI run. None of these establishes a
-historical market result or real-hardware advantage.
+Validation is divided between local deterministic checks, isolated-wheel
+evidence and the complete CI run. Reported evidence does not establish a
+historical market result or practical quantum advantage.
 
 - Source union: three authorized refs; `SOURCE_COVERAGE.json` lists every
   inspected source path, selected destination/hash, superseded revision and
@@ -35,9 +35,9 @@ historical market result or real-hardware advantage.
   complete setup/call/teardown passes are counted. No final suite total is
   claimed here until its worker exits successfully.
 - CI is configured to run the offline suite, wheel build/install/smokes and a
-  checksum-verified complete Git-history secret scan. No provider credentials
-  are injected. IBM/Braket hardware readiness code is retained, but actual QPU
-  execution is not claimed or validated.
+  checksum-verified complete Git-history secret scan. CI runs without provider
+  credentials; the hardware integration code is included in the source release.
+  Test evidence is scoped to the specific procedures recorded above.
 
 Excluded tests require private datasets, credentials, provider accounts,
 network access or historically frozen empirical result archives. Exclusions

@@ -38,9 +38,10 @@ IBM/Braket adapters, fake-backend parity, transpilation, readout mitigation, ZNE
 PEC, dynamical decoupling and resource estimates are retained. The research branch
 adds explicit budgets, retries, persistent spending state, frozen synthetic
 controls, evidence lineage, authorization gates and command-center exports.
-Mock/fake-backend tests verify software behavior only. They do not certify a real
-backend, successful QPU submission, private attestation or the safety of running
-unbounded provider jobs. Use explicit authorization and budgets before hardware work.
+Mock and fake-backend tests exercise software behavior under the stated test
+conditions. Provider-specific execution, private attestation and operational
+safety require their own documented validation and authorization. Apply explicit
+resource budgets and access controls for hardware workflows.
 
 ## References and attribution
 

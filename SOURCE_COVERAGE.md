@@ -45,7 +45,7 @@
 
 ## Missing or unvalidated
 
-- No identified first-party Python model family intentionally omitted; live QPU capability and historical empirical claims remain unvalidated
+- No identified first-party Python model family intentionally omitted. Historical empirical claims not reproduced in this release are documented in LIMITATIONS.md.
 
 ## Exclusions and license boundary
 
